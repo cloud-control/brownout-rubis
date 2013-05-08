@@ -18,10 +18,10 @@ client: $(all_client_obj)
 all: client
 
 initDB:
-	${JAVA} -classpath .:./database edu.rice.rubis.client.InitDB ${PARAM}
+	${JAVA} -classpath rubis_client.jar:. edu.rice.rubis.client.InitDB ${PARAM}
 
 emulator:
-	${JAVA} -classpath . edu.rice.rubis.client.ClientEmulator
+	${JAVA} -classpath rubis_client.jar:. edu.rice.rubis.client.ClientEmulator
 
 javadoc :
 	${MKDIR} -p doc

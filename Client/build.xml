@@ -16,7 +16,7 @@
   <!-- compile rule: Compile the beans and the servlets -->
   <target name="compile" depends="init">
     <javac srcdir="${src}"
-	   includes="edu/rice/rubis/client/**/*.java"
+	   includes="edu/rice/rubis/**/*.java"
 	   destdir="${build}/RUBiS-${version}"
 	   classpath="${build.classpath}"
 	   depend="yes"
@@ -28,7 +28,7 @@
   <target name="dist" depends="init, compile">
      <jar destfile="${dist}/rubis_client.jar">
 	<fileset dir="${build}/RUBiS-${version}"
-		 includes="edu/rice/rubis/client/**/*.class"/>
+		 includes="edu/rice/rubis/**/*.class"/>
     </jar>
   </target>
 
