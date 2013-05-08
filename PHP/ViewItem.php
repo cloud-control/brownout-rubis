@@ -105,6 +105,62 @@
     print($row["description"]);
     print("<br><p>\n");
 
+    // Simple recommender system
+	$recommenderValve = file_get_contents("recommenderValve");
+	if (empty($recommenderValve))
+		$recommenderValve = 100;
+
+	if (rand(0, 100) > $recommenderValve)
+		$recommenderQuery = "SELECT * FROM items WHERE 1=2";
+	else
+		$recommenderQuery =
+			"SELECT ".
+				"bids.item_id AS id, ".
+				"COUNT(bids.item_id) AS popularity, ".
+				"items.name AS name, ".
+				"items.initial_price AS price, ".
+				"items.max_bid AS max_bid, ".
+				"items.nb_of_bids AS nb_of_bids, ".
+				"items.end_date AS end_date ".
+			"FROM bids, items ".
+			"WHERE ".
+				"bids.item_id != " . $row["id"] . " AND " .
+				"bids.user_id IN (SELECT user_id FROM bids WHERE item_id = " . $row["id"] .") AND ".
+				"items.id = bids.item_id ".
+			"GROUP BY item_id ".
+			"ORDER BY popularity DESC ".
+			"LIMIT 5;" ; // huh
+    $recommenderResult = mysql_query($recommenderQuery, $link);
+    
+    if (mysql_num_rows($recommenderResult) == 0)
+    {
+	  /* No recommendations, don't make a fuzz out of it */
+      mysql_free_result($recommenderResult);
+    }
+    else
+    {
+      printHTMLHighlighted("Other items you might like");
+      print("<TABLE border=\"1\" summary=\"Other items you might like\">".
+            "<THEAD>".
+            "<TR><TH>Designation<TH>Price<TH>Bids<TH>End Date<TH>Bid Now".
+            "<TBODY>");
+      while ($row = mysql_fetch_array($recommenderResult))
+      {
+        $maxBid = $row["max_bid"];
+        if ($maxBid == 0)
+          $maxBid = $row["initial_price"];
+
+        print("<TR><TD><a href=\"/PHP/ViewItem.php?itemId=".$row["id"]."\">".$row["name"].
+          "<TD>$maxBid".
+          "<TD>".$row["nb_of_bids"].
+          "<TD>".$row["end_date"].
+          "<TD><a href=\"/PHP/PutBidAuth.php?itemId=".$row["id"]."\"><IMG SRC=\"/PHP/bid_now.jpg\" height=22 width=90></a>");
+      }
+      print("</TABLE>");
+
+      mysql_free_result($recommenderResult);
+    }
+
     commit($link);
     mysql_free_result($maxBidResult);
     mysql_free_result($result);
