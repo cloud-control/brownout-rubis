@@ -111,26 +111,34 @@
 		$recommenderValve = 100;
 
 	if (rand(0, 100) > $recommenderValve)
-		$recommenderQuery = "SELECT * FROM items WHERE 1=2";
+		$recommenderQueryItemIds = "SELECT * FROM items WHERE 1=2";
 	else
-		$recommenderQuery =
+		$recommenderQueryItemIds =
 			"SELECT ".
-				"bids.item_id AS id, ".
-				"COUNT(bids.item_id) AS popularity, ".
-				"items.name AS name, ".
-				"items.initial_price AS price, ".
-				"items.max_bid AS max_bid, ".
-				"items.nb_of_bids AS nb_of_bids, ".
-				"items.end_date AS end_date ".
-			"FROM bids, items ".
+				"bids2.item_id AS id, ".
+				"COUNT(bids2.item_id) AS popularity ".
+			"FROM ".
+				"bids ".
+				"LEFT JOIN bids AS bids2 ON bids.user_id = bids2.user_id ".
 			"WHERE ".
-				"bids.item_id != " . $row["id"] . " AND " .
-				"bids.user_id IN (SELECT user_id FROM bids WHERE item_id = " . $row["id"] .") AND ".
-				"items.id = bids.item_id ".
-			"GROUP BY item_id ".
+				"bids.item_id = " . $row["id"] . " AND " .
+				"bids2.item_id != " . $row["id"] . " " .
+			"GROUP BY bids2.item_id ".
 			"ORDER BY popularity DESC ".
-			"LIMIT 5;" ; // huh
-    $recommenderResult = mysql_query($recommenderQuery, $link);
+			"LIMIT 5;" ;
+	//echo $recommenderQueryItemIds;
+	$recommenderItemIdsResult = mysql_query($recommenderQueryItemIds, $link);
+
+	$recommenderQuery = "SELECT * FROM items WHERE id IN (";
+	while ($row = mysql_fetch_array($recommenderItemIdsResult))
+	{
+		$recommenderQuery .= $row["id"] . ", ";
+	}
+	$recommenderQuery .= "0)";
+	//echo $recommenderQuery;
+	mysql_free_result($recommenderItemIdsResult);
+	
+	$recommenderResult = mysql_query($recommenderQuery, $link);
     
     if (mysql_num_rows($recommenderResult) == 0)
     {
