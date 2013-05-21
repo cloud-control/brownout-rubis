@@ -147,7 +147,7 @@
     }
     else
     {
-      printHTMLHighlighted("Other items you might like");
+      printHTMLHighlighted(chr(128)."Other items you might like");
       print("<TABLE border=\"1\" summary=\"Other items you might like\">".
             "<THEAD>".
             "<TR><TH>Designation<TH>Price<TH>Bids<TH>End Date<TH>Bid Now".
