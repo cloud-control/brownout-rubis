@@ -105,7 +105,7 @@
 		$recommenderQueryItemIds = "SELECT * FROM items WHERE 1=2";
 	else {
 		$recommenderQueryItemIds =
-			"SELECT MAX_STATEMENT_TIME=1000 ".
+			"SELECT ". //MAX_STATEMENT_TIME=1000 ".
 				"bids2.item_id AS id, ".
 				"COUNT(bids2.item_id) AS popularity ".
 			"FROM ".
