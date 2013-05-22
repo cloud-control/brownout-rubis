@@ -103,7 +103,7 @@
 
 	if (rand(0, 100) > $recommenderValve)
 		$recommenderQueryItemIds = "SELECT * FROM items WHERE 1=2";
-	else
+	else {
 		$recommenderQueryItemIds =
 			"SELECT MAX_STATEMENT_TIME=1000 ".
 				"bids2.item_id AS id, ".
@@ -117,6 +117,8 @@
 			"GROUP BY bids2.item_id ".
 			"ORDER BY popularity DESC ".
 			"LIMIT 5;" ;
+		echo chr(128);
+	}
 	//echo $recommenderQueryItemIds;
 	$recommenderItemIdsResult = mysql_query($recommenderQueryItemIds, $link);
 
@@ -138,7 +140,7 @@
     }
     else
     {
-      printHTMLHighlighted(chr(128) . "Other items you might like");
+      printHTMLHighlighted("Other items you might like");
       print("<TABLE border=\"1\" summary=\"Other items you might like\">".
             "<THEAD>".
             "<TR><TH>Designation<TH>Price<TH>Bids<TH>End Date<TH>Bid Now".
