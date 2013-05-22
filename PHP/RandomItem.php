@@ -101,7 +101,7 @@
 	if (empty($recommenderValve))
 		$recommenderValve = 100;
 
-	if (rand(0, 100) > $recommenderValve)
+	if (rand(0, 99) >= $recommenderValve)
 		$recommenderQueryItemIds = "SELECT * FROM items WHERE 1=2";
 	else {
 		$recommenderQueryItemIds =
