@@ -97,7 +97,7 @@
     print("<br><p>\n");
 
     // Simple recommender system
-	$recommenderValve = file_get_contents("recommenderValve");
+	$recommenderValve = doubleval(file_get_contents("recommenderValve"));
 	if (empty($recommenderValve))
 		$recommenderValve = 1.0;
 
