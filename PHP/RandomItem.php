@@ -99,9 +99,10 @@
     // Simple recommender system
 	$recommenderValve = file_get_contents("recommenderValve");
 	if (empty($recommenderValve))
-		$recommenderValve = 100;
+		$recommenderValve = 1.0;
 
-	if (rand(0, 99) >= $recommenderValve)
+	$r = rand(0, 9999) / 10000;
+	if ($r >= $recommenderValve)
 		$recommenderQueryItemIds = "SELECT * FROM items WHERE 1=2";
 	else {
 		$recommenderQueryItemIds =

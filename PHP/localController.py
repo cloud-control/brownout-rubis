@@ -74,7 +74,7 @@ def main():
 
 				logging.info("Avg. latency {0}, setting service level to {1}".format(avg(latencies), probability))
 				with open('recommenderValve.tmp', 'w') as f:
-					print(probability*100, file = f)
+					print(probability, file = f)
 				os.rename('recommenderValve.tmp', 'recommenderValve')
 			else:
 				logging.info("No traffic since last control interval.")
