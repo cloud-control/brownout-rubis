@@ -98,8 +98,6 @@
 
     // Simple recommender system
 	$recommenderValve = doubleval(file_get_contents("recommenderValve"));
-	if (empty($recommenderValve))
-		$recommenderValve = 1.0;
 
 	$r = rand(0, 9999) / 10000;
 	if ($r >= $recommenderValve)
