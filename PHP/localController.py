@@ -42,8 +42,36 @@ def now():
 
 def avg(a):
 	if len(a) == 0:
-		return float('NaN')
+		return float('nan')
 	return sum(a) / len(a)
+
+def median(a):
+	# assumes a is sorted
+	n = len(a)
+	if n == 0:
+		return float('nan')
+	if n % 2 == 0:
+		return (a[n//2-1] + a[n//2]) / 2
+	else:
+		return a[n//2]
+
+def quartiles(a):
+	n = len(a)
+	if n == 0:
+		return [ float('nan') ] * 6
+	if n == 1:
+		return [ a[0] ] * 6
+
+	a = sorted(a)
+	ret = []
+	ret.append(a[0])
+	ret.append(median(a[:n//2]))
+	ret.append(median(a))
+	ret.append(median(a[n//2:]))
+	ret.append(a[-1])
+	ret.append(avg(a))
+
+	return ret
 
 class UnixTimeStampFormatter(logging.Formatter):
 	def formatTime(self, record, datefmt = None):
@@ -79,7 +107,17 @@ def main():
 					ctl_probability = probability,
 				)
 
-				logging.info("Avg. latency {0}, setting service level to {1}".format(avg(latencies), probability))
+				latencyStat = quartiles(latencies)
+				logging.info("latency={0:.0f}:{1:.0f}:{2:.0f}:{3:.0f}:{4:.0f}:({5:.0f})ms throughput={6:.0f}rps rr={7:.0f}%".format(
+					latencyStat[0] * 1000,
+					latencyStat[1] * 1000,
+					latencyStat[2] * 1000,
+					latencyStat[3] * 1000,
+					latencyStat[4] * 1000,
+					latencyStat[5] * 1000,
+					len(latencies)/(now()-lastControl),
+					probability * 100
+				))
 				with open('recommenderValve.tmp', 'w') as f:
 					print(probability, file = f)
 				os.rename('recommenderValve.tmp', 'recommenderValve')
