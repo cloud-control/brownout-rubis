@@ -45,8 +45,15 @@ def avg(a):
 		return float('NaN')
 	return sum(a) / len(a)
 
+class UnixTimeStampFormatter(logging.Formatter):
+	def formatTime(self, record, datefmt = None):
+		return "{0:.6f}".format(record.created)
+
 def main():
-	logging.basicConfig(level = logging.DEBUG)
+	logChannel = logging.StreamHandler()
+	logChannel.setFormatter(UnixTimeStampFormatter("%(asctime)s %(levelname)-5.5s [%(name)s] %(message)s"))
+	logging.getLogger().addHandler(logChannel)
+	logging.getLogger().setLevel(logging.DEBUG)
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.bind(("localhost", 2712))
