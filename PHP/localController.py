@@ -90,6 +90,7 @@ def main():
 	poll.register(s, select.POLLIN)
 	lastControl = now()
 	latencies = []
+	totalRequests = 0
 	probability = 0.5
 	while True: # controller never dies
 		waitFor = (CONTROL_INTERVAL - (now() - lastControl)) * 1000
@@ -107,8 +108,9 @@ def main():
 					ctl_probability = probability,
 				)
 
+				totalRequests += len(latencies)
 				latencyStat = quartiles(latencies)
-				logging.info("latency={0:.0f}:{1:.0f}:{2:.0f}:{3:.0f}:{4:.0f}:({5:.0f})ms throughput={6:.0f}rps rr={7:.0f}%".format(
+				logging.info("latency={0:.0f}:{1:.0f}:{2:.0f}:{3:.0f}:{4:.0f}:({5:.0f})ms throughput={6:.0f}rps rr={7:.2f}% total={8}".format(
 					latencyStat[0] * 1000,
 					latencyStat[1] * 1000,
 					latencyStat[2] * 1000,
@@ -116,7 +118,8 @@ def main():
 					latencyStat[4] * 1000,
 					latencyStat[5] * 1000,
 					len(latencies)/(now()-lastControl),
-					probability * 100
+					probability * 100,
+					totalRequests
 				))
 				with open('recommenderValve.tmp', 'w') as f:
 					print(probability, file = f)
