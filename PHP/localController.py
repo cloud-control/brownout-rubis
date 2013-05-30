@@ -3,6 +3,7 @@ from __future__ import print_function, division
 
 import datetime
 import logging
+from math import ceil
 import os
 import select
 import socket
@@ -11,6 +12,7 @@ from time import sleep
 import time
 
 CONTROL_INTERVAL = 1 # second
+MEASURE_INTERVAL = 5 # second
 
 # Controller logic
 def execute_controller(ctl_type, average_partial_service_times, set_point, ctl_probability):
@@ -19,9 +21,15 @@ def execute_controller(ctl_type, average_partial_service_times, set_point, ctl_p
 	# control algorithm mm
 	if ctl_type == 1:
 		c_est = average_partial_service_times / ctl_probability # very rough estimate
-		pole = 0.1
+		# NOTE: control knob allowing to smooth service times
+		# To enable this, you *must* add a new state variable (c_est) to the controller.
+		#c_est = 0.5 * c_est + 0.5 * average_partial_service_times / ctl_probability # very rough estimate
+		pole = 0.9
 		safety_margin = 0.01
 		error = (set_point - safety_margin) - average_partial_service_times
+		# NOTE: control knob allowing slow increase
+		#if error > 0:
+		#	error *= 0.01
 		ctl_probability = ctl_probability + (1/c_est) * (1 - pole) * error
 
 	# control algorithm ck
@@ -89,26 +97,30 @@ def main():
 	poll = select.poll()
 	poll.register(s, select.POLLIN)
 	lastControl = now()
-	latencies = []
+	lastTotalRequests = 0
+	timestampedLatencies = [] # tuples of timestamp, latency
 	totalRequests = 0
 	probability = 0.5
 	while True: # controller never dies
-		waitFor = (CONTROL_INTERVAL - (now() - lastControl)) * 1000
-
+		waitFor = max(ceil((lastControl + CONTROL_INTERVAL - now()) * 1000), 1)
 		events = poll.poll(waitFor)
+
+		_now = now() # i.e., all following operations are "atomic" with respect to time
 		if events:
-			data, address = s.recvfrom(4096)
-			latencies.append(float(data))
-		if now() - lastControl > CONTROL_INTERVAL:
+			data, address = s.recvfrom(4096, socket.MSG_DONTWAIT)
+			timestampedLatencies.append((_now, float(data)))
+			totalRequests += 1
+		if _now - lastControl >= CONTROL_INTERVAL:
+			timestampedLatencies = [ (t, l) for t, l in timestampedLatencies if t > _now - MEASURE_INTERVAL ]
+			latencies = [ l for t,l in timestampedLatencies ]
 			if latencies:
 				probability = execute_controller(
 					ctl_type = 1,
-					average_partial_service_times = avg(latencies),
+					average_partial_service_times = max(latencies),
 					set_point = 0.5,
 					ctl_probability = probability,
 				)
 
-				totalRequests += len(latencies)
 				latencyStat = quartiles(latencies)
 				logging.info("latency={0:.0f}:{1:.0f}:{2:.0f}:{3:.0f}:{4:.0f}:({5:.0f})ms throughput={6:.0f}rps rr={7:.2f}% total={8}".format(
 					latencyStat[0] * 1000,
@@ -117,17 +129,17 @@ def main():
 					latencyStat[3] * 1000,
 					latencyStat[4] * 1000,
 					latencyStat[5] * 1000,
-					len(latencies)/(now()-lastControl),
+					(totalRequests - lastTotalRequests) / (_now-lastControl),
 					probability * 100,
 					totalRequests
 				))
-				with open('recommenderValve.tmp', 'w') as f:
+				with open('/tmp/recommenderValve.tmp', 'w') as f:
 					print(probability, file = f)
-				os.rename('recommenderValve.tmp', 'recommenderValve')
+				os.rename('/tmp/recommenderValve.tmp', '/tmp/recommenderValve')
 			else:
 				logging.info("No traffic since last control interval.")
-			lastControl = now()
-			latencies = []
+			lastControl = _now
+			lastTotalRequests = totalRequests
 	s.close()
 
 if __name__ == "__main__":
