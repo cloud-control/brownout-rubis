@@ -97,7 +97,7 @@
     print("<br><p>\n");
 
     // Simple recommender system
-	$recommenderValve = doubleval(file_get_contents("recommenderValve"));
+	$recommenderValve = doubleval(file_get_contents("/tmp/recommenderValve"));
 
 	$r = rand(0, 9999) / 10000;
 	if ($r >= $recommenderValve)
