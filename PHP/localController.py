@@ -17,8 +17,9 @@ MEASURE_INTERVAL = 5 # second
 
 # Controller logic
 def execute_controller(ctl_type, pole, average_partial_service_times, set_point, ctl_probability):
+	# special value: no control
 	if pole == 0:
-		return
+		return ctl_probability
 	# control algorithm
 
 	# control algorithm mm
