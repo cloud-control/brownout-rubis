@@ -121,7 +121,7 @@ def main():
 			if latencies:
 				probability = execute_controller(
 					ctl_type = 1,
-					pole = option.pole,
+					pole = options.pole,
 					average_partial_service_times = max(latencies),
 					set_point = 1,
 					ctl_probability = probability,
