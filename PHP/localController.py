@@ -4,6 +4,7 @@ from __future__ import print_function, division
 import datetime
 import logging
 from math import ceil
+from optparse import OptionParser
 import os
 import select
 import socket
@@ -15,7 +16,7 @@ CONTROL_INTERVAL = 1 # second
 MEASURE_INTERVAL = 5 # second
 
 # Controller logic
-def execute_controller(ctl_type, average_partial_service_times, set_point, ctl_probability):
+def execute_controller(ctl_type, pole, average_partial_service_times, set_point, ctl_probability):
 	# control algorithm
 
 	# control algorithm mm
@@ -24,7 +25,6 @@ def execute_controller(ctl_type, average_partial_service_times, set_point, ctl_p
 		# NOTE: control knob allowing to smooth service times
 		# To enable this, you *must* add a new state variable (c_est) to the controller.
 		#c_est = 0.5 * c_est + 0.5 * average_partial_service_times / ctl_probability # very rough estimate
-		pole = 0.8
 		safety_margin = 0.01
 		error = (set_point - safety_margin) - average_partial_service_times
 		# NOTE: control knob allowing slow increase
@@ -91,6 +91,11 @@ def main():
 	logging.getLogger().addHandler(logChannel)
 	logging.getLogger().setLevel(logging.DEBUG)
 
+	# Parse command-line
+	parser = OptionParser()
+	parser.add_option("--pole", type="float", dest="pole", help="use this pole value (default: %default)", default = 0.9)
+	(options, args) = parser.parse_args()
+
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.bind(("localhost", 2712))
 
@@ -116,6 +121,7 @@ def main():
 			if latencies:
 				probability = execute_controller(
 					ctl_type = 1,
+					pole = option.pole,
 					average_partial_service_times = max(latencies),
 					set_point = 1,
 					ctl_probability = probability,
