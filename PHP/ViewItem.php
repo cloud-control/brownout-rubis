@@ -133,7 +133,7 @@
       $recommenderQuery .= "0)";
       //echo $recommenderQuery; // For debugging
       $recommenderResult = mysql_query($recommenderQuery, $link);
-    
+
       if (mysql_num_rows($recommenderResult) != 0)
       {
         printHTMLHighlighted("Other items you might like");
