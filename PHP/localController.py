@@ -151,7 +151,8 @@ def main():
 				os.rename('/tmp/recommenderValve.tmp', '/tmp/recommenderValve')
 
 				# Report performance to RM
-				sRm.sendto(str(0), (options.rmIp, options.rmPort))
+				matchingValue = min([ options.setPoint / latency - 1.0 for latency in latencies ])
+				sRm.sendto(str(matchingValue), (options.rmIp, options.rmPort))
 			else:
 				logging.info("No traffic since last control interval.")
 			lastControl = _now
