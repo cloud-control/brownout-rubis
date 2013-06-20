@@ -97,10 +97,10 @@
     print("<br><p>\n");
 
     // Simple recommender system
-	$recommenderValve = doubleval(file_get_contents("/tmp/recommenderValve"));
+	$serviceLevel = doubleval(file_get_contents("/tmp/serviceLevel"));
 
 	$r = rand(0, 9999) / 10000;
-	if ($r >= $recommenderValve)
+	if ($r >= $serviceLevel)
 		$recommenderQueryItemIds = "SELECT * FROM items WHERE 1=2";
 	else {
 		$recommenderQueryItemIds =
