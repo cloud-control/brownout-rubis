@@ -101,69 +101,62 @@
     print($row["description"]);
     print("<br><p>\n");
 
-    // Simple recommender system
-	$recommenderValve = file_get_contents("recommenderValve");
-	if (empty($recommenderValve))
-		$recommenderValve = 100;
+    // Optional code: recommender system
+    $serviceLevel = doubleval(file_get_contents("/tmp/serviceLevel"));
+    $r = rand(0, 9999) / 10000;
+    if ($r < $serviceLevel)
+    {
+      echo chr(128); // Special marker for httpmon
 
-	if (rand(0, 99) >= $recommenderValve)
-		$recommenderQueryItemIds = "SELECT * FROM items WHERE 1=2";
-	else {
-		$recommenderQueryItemIds =
-			"SELECT ". //MAX_STATEMENT_TIME=1000 ".
-				"bids2.item_id AS id, ".
-				"COUNT(bids2.item_id) AS popularity ".
-			"FROM ".
-				"bids ".
-				"LEFT JOIN bids AS bids2 ON bids.user_id = bids2.user_id ".
-			"WHERE ".
-				"bids.item_id = " . $row["id"] . " AND " .
-				"bids2.item_id != " . $row["id"] . " " .
-			"GROUP BY bids2.item_id ".
-			"ORDER BY popularity DESC ".
-			"LIMIT 5;" ;
-		echo chr(128);
-	}
-	//echo $recommenderQueryItemIds;
-	$recommenderItemIdsResult = mysql_query($recommenderQueryItemIds, $link);
+      // Due to bad optimizing in MySQL, we need to do this in two steps
+      // Step 1: retrieve item IDs, ordered by popularity, top 5
+      $recommenderItemIdsQuery =
+        "SELECT ".
+          "bids2.item_id AS id, ".
+          "COUNT(bids2.item_id) AS popularity ".
+        "FROM ".
+          "bids ".
+          "LEFT JOIN bids AS bids2 ON bids.user_id = bids2.user_id ".
+        "WHERE ".
+          "bids.item_id = " . $row["id"] . " AND " .
+          "bids2.item_id != " . $row["id"] . " " .
+        "GROUP BY bids2.item_id ".
+        "ORDER BY popularity DESC ".
+        "LIMIT 5;" ;
+      //echo $recommenderItemIdsQuery; // For debugging
+      $recommenderItemIdsResult = mysql_query($recommenderItemIdsQuery, $link);
 
-	$recommenderQuery = "SELECT * FROM items WHERE id IN (";
-	while ($row = mysql_fetch_array($recommenderItemIdsResult))
-	{
-		$recommenderQuery .= $row["id"] . ", ";
-	}
-	$recommenderQuery .= "0)";
-	//echo $recommenderQuery;
-	mysql_free_result($recommenderItemIdsResult);
-	
-	$recommenderResult = mysql_query($recommenderQuery, $link);
+      // Step 2: get all information about the items
+      $recommenderQuery = "SELECT * FROM items WHERE id IN (";
+      while ($row = mysql_fetch_array($recommenderItemIdsResult))
+        $recommenderQuery .= $row["id"] . ", ";
+      $recommenderQuery .= "0)";
+      //echo $recommenderQuery; // For debugging
+      $recommenderResult = mysql_query($recommenderQuery, $link);
     
-    if (mysql_num_rows($recommenderResult) == 0)
-    {
-	  /* No recommendations, don't make a fuzz out of it */
-      mysql_free_result($recommenderResult);
-    }
-    else
-    {
-      printHTMLHighlighted("Other items you might like");
-      print("<TABLE border=\"1\" summary=\"Other items you might like\">".
-            "<THEAD>".
-            "<TR><TH>Designation<TH>Price<TH>Bids<TH>End Date<TH>Bid Now".
-            "<TBODY>");
-      while ($row = mysql_fetch_array($recommenderResult))
+      if (mysql_num_rows($recommenderResult) != 0)
       {
-        $maxBid = $row["max_bid"];
-        if ($maxBid == 0)
-          $maxBid = $row["initial_price"];
+        printHTMLHighlighted("Other items you might like");
+        print("<TABLE border=\"1\" summary=\"Other items you might like\">".
+              "<THEAD>".
+              "<TR><TH>Designation<TH>Price<TH>Bids<TH>End Date<TH>Bid Now".
+              "<TBODY>");
+        while ($row = mysql_fetch_array($recommenderResult))
+        {
+          $maxBid = $row["max_bid"];
+          if ($maxBid == 0)
+            $maxBid = $row["initial_price"];
 
-        print("<TR><TD><a href=\"/PHP/ViewItem.php?itemId=".$row["id"]."\">".$row["name"].
-          "<TD>$maxBid".
-          "<TD>".$row["nb_of_bids"].
-          "<TD>".$row["end_date"].
-          "<TD><a href=\"/PHP/PutBidAuth.php?itemId=".$row["id"]."\"><IMG SRC=\"/PHP/bid_now.jpg\" height=22 width=90></a>");
+          print("<TR><TD><a href=\"/PHP/ViewItem.php?itemId=".$row["id"]."\">".$row["name"].
+              "<TD>$maxBid".
+              "<TD>".$row["nb_of_bids"].
+              "<TD>".$row["end_date"].
+              "<TD><a href=\"/PHP/PutBidAuth.php?itemId=".$row["id"]."\"><IMG SRC=\"/PHP/bid_now.jpg\" height=22 width=90></a>");
+        }
+        print("</TABLE>");
       }
-      print("</TABLE>");
 
+      mysql_free_result($recommenderItemIdsResult);
       mysql_free_result($recommenderResult);
     }
 
