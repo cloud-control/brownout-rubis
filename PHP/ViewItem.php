@@ -125,12 +125,13 @@
         "LIMIT 5;" ;
       //echo $recommenderItemIdsQuery; // For debugging
       $recommenderItemIdsResult = mysql_query($recommenderItemIdsQuery, $link);
+      $itemIds = array();
+      while ($row = mysql_fetch_array($recommenderItemIdsResult))
+        array_push($itemIds, $row["id"]);
+      mysql_free_result($recommenderItemIdsResult);
 
       // Step 2: get all information about the items
-      $recommenderQuery = "SELECT * FROM items WHERE id IN (";
-      while ($row = mysql_fetch_array($recommenderItemIdsResult))
-        $recommenderQuery .= $row["id"] . ", ";
-      $recommenderQuery .= "0)";
+      $recommenderQuery = "SELECT * FROM items WHERE id IN (" . join(",", $itemIds) . ")";
       //echo $recommenderQuery; // For debugging
       $recommenderResult = mysql_query($recommenderQuery, $link);
 
@@ -156,7 +157,6 @@
         print("</TABLE>");
       }
 
-      mysql_free_result($recommenderItemIdsResult);
       mysql_free_result($recommenderResult);
     }
 
