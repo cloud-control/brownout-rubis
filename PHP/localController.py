@@ -12,9 +12,6 @@ from sys import stderr
 from time import sleep
 import time
 
-CONTROL_INTERVAL = 1 # second
-MEASURE_INTERVAL = 5 # second
-
 # Controller logic
 def execute_controller(ctl_type, pole, average_partial_service_times, set_point, ctl_probability):
 	# special value: no control
@@ -97,6 +94,8 @@ def main():
 	# Parse command-line
 	parser = OptionParser()
 	parser.add_option("--pole", type="float", dest="pole", help="use this pole value (default: %default)", default = 0.9)
+	parser.add_option("--controlInterval", type="float", help="time between control iterations (default: %default)", default = 1)
+	parser.add_option("--measureInterval", type="float", help="act based on maximum latency this far in the past (default: %default)", default = 5)
 	(options, args) = parser.parse_args()
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -110,7 +109,7 @@ def main():
 	totalRequests = 0
 	probability = 0.5
 	while True: # controller never dies
-		waitFor = max(ceil((lastControl + CONTROL_INTERVAL - now()) * 1000), 1)
+		waitFor = max(ceil((lastControl + options.controlInterval - now()) * 1000), 1)
 		events = poll.poll(waitFor)
 
 		_now = now() # i.e., all following operations are "atomic" with respect to time
@@ -118,8 +117,8 @@ def main():
 			data, address = s.recvfrom(4096, socket.MSG_DONTWAIT)
 			timestampedLatencies.append((_now, float(data)))
 			totalRequests += 1
-		if _now - lastControl >= CONTROL_INTERVAL:
-			timestampedLatencies = [ (t, l) for t, l in timestampedLatencies if t > _now - MEASURE_INTERVAL ]
+		if _now - lastControl >= options.controlInterval:
+			timestampedLatencies = [ (t, l) for t, l in timestampedLatencies if t > _now - options.measureInterval ]
 			latencies = [ l for t,l in timestampedLatencies ]
 			if latencies:
 				probability = execute_controller(
