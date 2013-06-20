@@ -5,8 +5,9 @@
     $scriptName = "ViewItem.php";
     include("PHPprinter.php");
     $startTime = getMicroTime();
-    
-    $itemId = $_REQUEST['itemId'];
+
+    if (!isset($itemId)) /* Allow ViewItem.php to be included from RandomItem.php */
+      $itemId = $_REQUEST['itemId'];
     if ($itemId == null)
     {
       printError($scriptName, $startTime, "Viewing item", "You must provide an item identifier!<br>");
