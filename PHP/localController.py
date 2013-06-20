@@ -93,7 +93,7 @@ def main():
 
 	# Parse command-line
 	parser = OptionParser()
-	parser.add_option("--pole", type="float", dest="pole", help="use this pole value (default: %default)", default = 0.9)
+	parser.add_option("--pole"    , type="float", help="use this pole value (default: %default)", default = 0.9)
 	parser.add_option("--controlInterval", type="float", help="time between control iterations (default: %default)", default = 1)
 	parser.add_option("--measureInterval", type="float", help="act based on maximum latency this far in the past (default: %default)", default = 5)
 	(options, args) = parser.parse_args()
