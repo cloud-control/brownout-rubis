@@ -97,10 +97,14 @@ def main():
 	parser.add_option("--setPoint", type="float", help="keep maximum latency around this value (default: %default)", default = 1)
 	parser.add_option("--controlInterval", type="float", help="time between control iterations (default: %default)", default = 1)
 	parser.add_option("--measureInterval", type="float", help="act based on maximum latency this far in the past (default: %default)", default = 5)
+	parser.add_option("--rmIp", type="string", help="send matching values to this IP (default: %default)", default = "192.168.122.1")
+	parser.add_option("--rmPort", type="int", help="send matching values to this UDP port (default: %default)", default = 2712)
 	(options, args) = parser.parse_args()
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.bind(("localhost", 2712))
+
+	sRm = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 	poll = select.poll()
 	poll.register(s, select.POLLIN)
@@ -145,6 +149,9 @@ def main():
 				with open('/tmp/recommenderValve.tmp', 'w') as f:
 					print(probability, file = f)
 				os.rename('/tmp/recommenderValve.tmp', '/tmp/recommenderValve')
+
+				# Report performance to RM
+				sRm.sendto(str(0), (options.rmIp, options.rmPort))
 			else:
 				logging.info("No traffic since last control interval.")
 			lastControl = _now
