@@ -136,10 +136,14 @@ def main():
 					serviceTime = max(latencies),
 					serviceLevel = serviceLevel,
 				)
+				
+				# Report performance to RM
+				matchingValue = min([ 1 - latency / options.setPoint for latency in latencies ])
+				rmSocket.sendto(str(matchingValue), (options.rmIp, options.rmPort))
 
 				# Print statistics
 				latencyStat = quartiles(latencies)
-				logging.info("latency={0:.0f}:{1:.0f}:{2:.0f}:{3:.0f}:{4:.0f}:({5:.0f})ms throughput={6:.0f}rps rr={7:.2f}% total={8}".format(
+				logging.info("latency={0:.0f}:{1:.0f}:{2:.0f}:{3:.0f}:{4:.0f}:({5:.0f})ms throughput={6:.0f}rps rr={7:.2f}% total={8} perf={9:.3f}".format(
 					latencyStat[0] * 1000,
 					latencyStat[1] * 1000,
 					latencyStat[2] * 1000,
@@ -148,15 +152,12 @@ def main():
 					latencyStat[5] * 1000,
 					(totalRequests - lastTotalRequests) / (_now-lastControl),
 					serviceLevel * 100,
-					totalRequests
+					totalRequests,
+					matchingValue,
 				))
 				with open('/tmp/serviceLevel.tmp', 'w') as f:
 					print(serviceLevel, file = f)
 				os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
-
-				# Report performance to RM
-				matchingValue = min([ options.setPoint / latency - 1.0 for latency in latencies ])
-				rmSocket.sendto(str(matchingValue), (options.rmIp, options.rmPort))
 			else:
 				logging.info("No traffic since last control interval.")
 			lastControl = _now
