@@ -85,6 +85,7 @@ def main():
 	parser = OptionParser()
 	parser.add_option("--pole"    , type="float", help="use this pole value (default: %default)", default = 0.9)
 	parser.add_option("--setPoint", type="float", help="keep maximum latency around this value (default: %default)", default = 1)
+	parser.add_option("--serviceLevel", type="float", help="set the initial service level; useful when no control is present (default: %default)", default = 0.5)
 	parser.add_option("--controlInterval", type="float", help="time between control iterations (default: %default)", default = 1)
 	parser.add_option("--measureInterval", type="float", help="act based on maximum latency this far in the past (default: %default)", default = 5)
 	parser.add_option("--rmIp", type="string", help="send matching values to this IP (default: %default)", default = "192.168.122.1")
@@ -105,7 +106,7 @@ def main():
 	lastTotalRequests = 0
 	timestampedLatencies = [] # tuples of timestamp, latency
 	totalRequests = 0
-	serviceLevel = 0.5
+	serviceLevel = options.serviceLevel
 
 	# Control loop
 	while True:
