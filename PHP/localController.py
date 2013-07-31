@@ -108,6 +108,11 @@ def main():
 	totalRequests = 0
 	serviceLevel = options.serviceLevel
 
+	# Output initial service level
+	with open('/tmp/serviceLevel.tmp', 'w') as f:
+		print(serviceLevel, file = f)
+	os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
+
 	# Control loop
 	while True:
 		# Wait for next control iteration or message from application
@@ -156,6 +161,8 @@ def main():
 					totalRequests,
 					matchingValue,
 				))
+
+				# Output service level
 				with open('/tmp/serviceLevel.tmp', 'w') as f:
 					print(serviceLevel, file = f)
 				os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
