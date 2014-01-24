@@ -4,7 +4,7 @@
     <?php
     /* Get dimmer from file */
     $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
-    header("X-dimmer: $serviceLevel");
+    header("X-Dimmer: $serviceLevel");
 
     $scriptName = "ViewItem.php";
     include("PHPprinter.php");
