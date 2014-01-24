@@ -2,6 +2,10 @@
 <html>
   <body>
     <?php
+    /* Get dimmer from file */
+    $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
+    header("X-dimmer: $serviceLevel");
+
     $scriptName = "ViewItem.php";
     include("PHPprinter.php");
     $startTime = getMicroTime();
@@ -103,7 +107,6 @@
     print("<br><p>\n");
 
     // Optional code: recommender system
-    $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
     $r = rand(0, 9999) / 10000;
     if ($r < $serviceLevel)
     {
