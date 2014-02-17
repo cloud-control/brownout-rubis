@@ -5,6 +5,9 @@
     /* Get dimmer from file */
     $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
     header("X-Dimmer: $serviceLevel");
+    $r = rand(0, 9999) / 10000;
+    $withOptional = ($r < $serviceLevel);
+    header("X-WithOptional: $withOptional");
 
     $scriptName = "ViewItem.php";
     include("PHPprinter.php");
@@ -107,8 +110,7 @@
     print("<br><p>\n");
 
     // Optional code: recommender system
-    $r = rand(0, 9999) / 10000;
-    if ($r < $serviceLevel)
+    if ($withOptional)
     {
       echo chr(128); // Special marker for httpmon
 
