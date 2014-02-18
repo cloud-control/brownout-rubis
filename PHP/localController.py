@@ -4,6 +4,7 @@ from __future__ import print_function, division
 import datetime
 import logging
 from math import ceil
+import numpy as np
 from optparse import OptionParser
 import os
 import select
@@ -12,27 +13,107 @@ from sys import stderr
 from time import sleep
 import time
 
+## Computes average
+# @param numbers list of number to compute average for
+# @return average or NaN if list is empty
+def avg(numbers):
+	if len(numbers) == 0:
+		return float('nan')
+	return sum(numbers)/len(numbers)
+
+## Computes maximum
+# @param numbers list of number to compute maximum for
+# @return maximum or NaN if list is empty
+# @note Similar to built-in function max(), but returns NaN instead of throwing
+# exception when list is empty
+def maxOrNan(numbers):
+	if len(numbers) == 0:
+		return float('nan')
+	return max(numbers)
+
 # Controller logic
-def executeController(pole, setPoint, serviceTime, serviceLevel):
-	# special value: no control
-	if pole == 0:
-		return serviceLevel
+class Controller:
+	## Constructor.
+	# @param initialTheta initial dimmer value
+	# @param controlPeriod control period of brownout controller (0 = disabled)
+	# @param setPoint where to keep latencies
+	def __init__(self, initialTheta = 0.5, controlPeriod = 5, setPoint = 1, pole = 0.99):
+		## control period (controller parameter)
+		self.controlPeriod = controlPeriod # second
+		## setpoint (controller parameter)
+		self.setPoint = setPoint
+		## initialization for the RLS estimator (controller variable)
+		self.rlsP = 1000
+		## RLS forgetting factor (controller parameter)
+		self.rlsForgetting = 0.95
+		## Current alpha (controller variable)
+		self.alpha = 1
+		## Pole (controller parameter)
+		self.pole = pole
+		## latencies measured during last control period (controller input)
+		self.latestLatencies = []
+		## dimmer value (controller output)
+		self.theta = initialTheta
+		## matching value (controller output)
+		self.matchingValue = 0
 
-	alpha = serviceTime / serviceLevel # very rough estimate
-	# NOTE: control knob allowing to smooth service times
-	# To enable this, you *must* add a new state variable (alpha) to the controller.
-	#alpha = 0.5 * alpha + 0.5 * serviceTime / previousServiceLevel # very rough estimate
-	error = setPoint - serviceTime
-	# NOTE: control knob allowing slow increase
-	if error > 0:
-		error *= 0.1
-	serviceLevel = serviceLevel + (1 / alpha) * (1 - pole) * error
+	## Runs the control loop.
+	# Basically retrieves self.lastestLatencies and computes a new self.theta.
+	# Ask Martina for details. :P
+	def runControlLoop(self):
+		if self.latestLatencies:
+			# Possible choices: max or avg latency control
+			# serviceTime = avg(self.latestLatencies) # avg latency
+			# serviceTime = max(self.latestLatencies) # max latency
+			serviceTime = np.percentile(self.latestLatencies, 95) # 95 percentile
+			serviceLevel = self.theta
 
-	# saturation, service level is a probability
-	serviceLevel = max(serviceLevel, 0.0)
-	serviceLevel = min(serviceLevel, 1.0)
-	return serviceLevel
-# end controller logic
+			# choice of the estimator:
+			# ------- bare estimator
+			# self.alpha = serviceTime / serviceLevel # very rough estimate
+			# ------- RLS estimation algorithm
+			a = self.rlsP*serviceLevel
+			g = 1 / (serviceLevel*a + self.rlsForgetting)
+			k = g*a
+			e = serviceTime - serviceLevel*self.alpha
+			self.alpha = self.alpha + k*e
+			self.rlsP  = (self.rlsP - g * a*a) / self.rlsForgetting
+			# end of the estimator - in the end self.alpha should be set
+
+			error = self.setPoint - serviceTime
+			# NOTE: control knob allowing slow increase
+			#if error > 0:
+			#	error *= 0.1
+			variation = (1 / self.alpha) * (1 - self.pole) * error
+			serviceLevel += self.controlPeriod * variation
+
+			# saturation, it's a probability
+			self.theta = min(max(serviceLevel, 0.0), 1.0)
+
+			# compute matching value
+			self.matchingValue = min([ 1 - latency / self.setPoint for latency in self.latestLatencies ])
+		else:
+			self.matchingValue = 0
+
+		utilization = float('nan') # XXX: not implemented (does it make sense for the real environment?)
+
+		# Report
+		valuesToOutput = [ \
+			now(), \
+			avg(self.latestLatencies), \
+			maxOrNan(self.latestLatencies), \
+			self.theta, \
+			utilization, \
+			self.matchingValue, \
+		]
+		print(','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+
+		# Re-run later
+		self.latestLatencies = []
+
+	def reportLatency(self, latency):
+		self.latestLatencies.append(latency)
 
 def now():
 	return time.time()
@@ -83,11 +164,10 @@ def main():
 
 	# Parse command-line
 	parser = OptionParser()
-	parser.add_option("--pole"    , type="float", help="use this pole value (default: %default)", default = 0.9)
+	parser.add_option("--pole"    , type="float", help="use this pole value (default: %default)", default = 0.99)
 	parser.add_option("--setPoint", type="float", help="keep maximum latency around this value (default: %default)", default = 1)
 	parser.add_option("--serviceLevel", type="float", help="set the initial service level; useful when no control is present (default: %default)", default = 0.5)
-	parser.add_option("--controlInterval", type="float", help="time between control iterations (default: %default)", default = 1)
-	parser.add_option("--measureInterval", type="float", help="act based on maximum latency this far in the past (default: %default)", default = 5)
+	parser.add_option("--controlPeriod", type="float", help="time between control iterations (default: %default)", default = 5)
 	parser.add_option("--rmIp", type="string", help="send matching values to this IP (default: %default)", default = "192.168.122.1")
 	parser.add_option("--rmPort", type="int", help="send matching values to this UDP port (default: %default)", default = 2712)
 	(options, args) = parser.parse_args()
@@ -104,7 +184,6 @@ def main():
 	poll.register(appSocket, select.POLLIN)
 	lastControl = now()
 	lastTotalRequests = 0
-	timestampedLatencies = [] # tuples of timestamp, latency
 	totalRequests = 0
 	serviceLevel = options.serviceLevel
 
@@ -114,62 +193,36 @@ def main():
 	os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
 
 	# Control loop
+	controller = Controller( \
+		setPoint = options.setPoint, \
+		pole = options.pole, \
+		controlPeriod = options.controlPeriod)
+
 	while True:
 		# Wait for next control iteration or message from application
-		waitFor = max(ceil((lastControl + options.controlInterval - now()) * 1000), 1)
+		waitFor = max(ceil((lastControl + options.controlPeriod - now()) * 1000), 1)
 		events = poll.poll(waitFor)
 
 		_now = now() # i.e., all following operations are "atomic" with respect to time
 		# If we received a latency report, record it
 		if events:
 			data, address = appSocket.recvfrom(4096, socket.MSG_DONTWAIT)
-			timestampedLatencies.append((_now, float(data)))
-			totalRequests += 1
+			controller.reportLatency(float(data))
 
 		# Run control algorithm if it's time for it
-		if _now - lastControl >= options.controlInterval:
-			# Filter latencies: only take those from the measure interval
-			timestampedLatencies = [ (t, l)
-				for t, l in timestampedLatencies if t > _now - options.measureInterval ]
-			latencies = [ l for t,l in timestampedLatencies ]
+		if _now - lastControl >= options.controlPeriod:
+			controller.runControlLoop()
 
-			# Do we have new reports?
-			if latencies:
-				# Execute controller
-				serviceLevel = executeController(
-					pole = options.pole,
-					setPoint = options.setPoint,
-					serviceTime = max(latencies),
-					serviceLevel = serviceLevel,
-				)
-				
-				# Report performance to RM
-				matchingValue = min([ 1 - latency / options.setPoint for latency in latencies ])
-				rmSocket.sendto(str(matchingValue), (options.rmIp, options.rmPort))
+			# Report performance to RM
+			rmSocket.sendto(str(controller.matchingValue), (options.rmIp, options.rmPort))
 
-				# Print statistics
-				latencyStat = quartiles(latencies)
-				logging.info("latency={0:.0f}:{1:.0f}:{2:.0f}:{3:.0f}:{4:.0f}:({5:.0f})ms throughput={6:.0f}rps rr={7:.2f}% total={8} perf={9:.3f}".format(
-					latencyStat[0] * 1000,
-					latencyStat[1] * 1000,
-					latencyStat[2] * 1000,
-					latencyStat[3] * 1000,
-					latencyStat[4] * 1000,
-					latencyStat[5] * 1000,
-					(totalRequests - lastTotalRequests) / (_now-lastControl),
-					serviceLevel * 100,
-					totalRequests,
-					matchingValue,
-				))
+			# Output service level
+			with open('/tmp/serviceLevel.tmp', 'w') as f:
+				print(serviceLevel, file = f)
+			os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
 
-				# Output service level
-				with open('/tmp/serviceLevel.tmp', 'w') as f:
-					print(serviceLevel, file = f)
-				os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
-			else:
-				logging.info("No traffic since last control interval.")
+			# Prepare for next control action
 			lastControl = _now
-			lastTotalRequests = totalRequests
 	s.close()
 
 if __name__ == "__main__":
