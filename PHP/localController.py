@@ -9,7 +9,7 @@ from optparse import OptionParser
 import os
 import select
 import socket
-from sys import stderr
+import sys
 from time import sleep
 import time
 
@@ -108,6 +108,7 @@ class Controller:
 		]
 		print(','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
+		sys.stdout.flush()
 
 		# Re-run later
 		self.latestLatencies = []
@@ -166,7 +167,7 @@ def main():
 	parser = OptionParser()
 	parser.add_option("--pole"    , type="float", help="use this pole value (default: %default)", default = 0.99)
 	parser.add_option("--setPoint", type="float", help="keep maximum latency around this value (default: %default)", default = 1)
-	parser.add_option("--serviceLevel", type="float", help="set the initial service level; useful when no control is present (default: %default)", default = 0.5)
+	parser.add_option("--initialTheta", type="float", help="set the initial dimmer value; useful when no control is present (default: %default)", default = 0.5)
 	parser.add_option("--controlPeriod", type="float", help="time between control iterations (default: %default)", default = 5)
 	parser.add_option("--rmIp", type="string", help="send matching values to this IP (default: %default)", default = "192.168.122.1")
 	parser.add_option("--rmPort", type="int", help="send matching values to this UDP port (default: %default)", default = 2712)
@@ -183,17 +184,16 @@ def main():
 	poll = select.poll()
 	poll.register(appSocket, select.POLLIN)
 	lastControl = now()
-	lastTotalRequests = 0
 	totalRequests = 0
-	serviceLevel = options.serviceLevel
 
 	# Output initial service level
 	with open('/tmp/serviceLevel.tmp', 'w') as f:
-		print(serviceLevel, file = f)
+		print(options.initialTheta, file = f)
 	os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
 
 	# Control loop
 	controller = Controller( \
+		initialTheta = options.initialTheta, \
 		setPoint = options.setPoint, \
 		pole = options.pole, \
 		controlPeriod = options.controlPeriod)
@@ -218,7 +218,7 @@ def main():
 
 			# Output service level
 			with open('/tmp/serviceLevel.tmp', 'w') as f:
-				print(serviceLevel, file = f)
+				print(controller.theta, file = f)
 			os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
 
 			# Prepare for next control action
