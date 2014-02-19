@@ -165,10 +165,10 @@ def main():
 
 	# Parse command-line
 	parser = OptionParser()
-	parser.add_option("--pole"    , type="float", help="use this pole value (default: %default)", default = 0.99)
+	parser.add_option("--pole"    , type="float", help="use this pole value (default: %default)", default = 0.9)
 	parser.add_option("--setPoint", type="float", help="keep maximum latency around this value (default: %default)", default = 1)
 	parser.add_option("--initialTheta", type="float", help="set the initial dimmer value; useful when no control is present (default: %default)", default = 0.5)
-	parser.add_option("--controlPeriod", type="float", help="time between control iterations (default: %default)", default = 5)
+	parser.add_option("--controlPeriod", type="float", help="time between control iterations (default: %default)", default = 0.5)
 	parser.add_option("--rmIp", type="string", help="send matching values to this IP (default: %default)", default = "192.168.122.1")
 	parser.add_option("--rmPort", type="int", help="send matching values to this UDP port (default: %default)", default = 2712)
 	(options, args) = parser.parse_args()
