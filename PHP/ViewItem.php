@@ -132,6 +132,7 @@
       //echo $recommenderItemIdsQuery; // For debugging
       $recommenderItemIdsResult = mysql_query($recommenderItemIdsQuery, $link);
       $itemIds = array();
+      array_push($itemIds, 0); // Make sure at least one item is recommended
       while ($row = mysql_fetch_array($recommenderItemIdsResult))
         array_push($itemIds, $row["id"]);
       mysql_free_result($recommenderItemIdsResult);
