@@ -187,9 +187,9 @@ def main():
 	totalRequests = 0
 
 	# Output initial service level
-	with open('/tmp/serviceLevel.tmp', 'w') as f:
+	with open('/run/serviceLevel.tmp', 'w') as f:
 		print(options.initialTheta, file = f)
-	os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
+	os.rename('/run/serviceLevel.tmp', '/run/serviceLevel')
 
 	# Control loop
 	controller = Controller( \
@@ -217,9 +217,9 @@ def main():
 			rmSocket.sendto(str(controller.matchingValue), (options.rmIp, options.rmPort))
 
 			# Output service level
-			with open('/tmp/serviceLevel.tmp', 'w') as f:
+			with open('/run/serviceLevel.tmp', 'w') as f:
 				print(controller.theta, file = f)
-			os.rename('/tmp/serviceLevel.tmp', '/tmp/serviceLevel')
+			os.rename('/run/serviceLevel.tmp', '/run/serviceLevel')
 
 			# Prepare for next control action
 			lastControl = _now

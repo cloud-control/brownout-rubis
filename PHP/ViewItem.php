@@ -3,7 +3,7 @@
   <body>
     <?php
     /* Get dimmer from file */
-    $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
+    $serviceLevel = doubleval(@file_get_contents("/run/dimmer"));
     header("X-Dimmer: $serviceLevel");
     $r = rand(0, 9999) / 10000;
     $withOptional = ($r < $serviceLevel);
