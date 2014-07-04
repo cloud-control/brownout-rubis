@@ -465,6 +465,9 @@ static int proxy_create_env(server *srv, handler_ctx *hctx) {
 	}
 	proxy_set_header(con, "X-Forwarded-Proto", con->uri.scheme->ptr);
 
+	// TODO: call forward path part of controller
+	proxy_set_header(con, "X-With-Optional", "0");
+
 	/* request header */
 	for (i = 0; i < con->request.headers->used; i++) {
 		data_string *ds;
@@ -558,6 +561,8 @@ static int proxy_response_parse(server *srv, connection *con, plugin_data *p, bu
 	UNUSED(srv);
 
 	/* \r\n -> \0\0 */
+
+	// TODO: call reverse path of controller
 
 	buffer_copy_string_buffer(p->parse_response, in);
 

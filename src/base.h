@@ -448,6 +448,8 @@ typedef struct {
 	etag_flags_t etag_flags;
 
 	int conditional_is_valid[COMP_LAST_ELEMENT]; 
+
+	// TODO: add controller state
 } connection;
 
 typedef struct {
