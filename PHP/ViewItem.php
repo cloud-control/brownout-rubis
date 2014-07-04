@@ -3,11 +3,9 @@
   <body>
     <?php
     /* Get dimmer from file */
-    $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
-    header("X-Dimmer: $serviceLevel");
-    $r = rand(0, 9999) / 10000;
-    $withOptional = ($r < $serviceLevel);
-    header("X-WithOptional: $withOptional");
+    $withOptional = FALSE;
+    if (isset($_SERVER['HTTP_X_WITH_OPTIONAL']))
+      $withOptional = $_SERVER['HTTP_X_WITH_OPTIONAL'];
 
     $scriptName = "ViewItem.php";
     include("PHPprinter.php");
