@@ -466,8 +466,22 @@ static int proxy_create_env(server *srv, handler_ctx *hctx) {
 	proxy_set_header(con, "X-Forwarded-Proto", con->uri.scheme->ptr);
 
 	// TODO: call forward path part of controller
-	char *withOptional = hctx->host->usage < 8 ? "1" : "0";
-	proxy_set_header(con, "X-With-Optional", withOptional);
+	int threshold_low = 6;
+	int threshold_high = 10;
+
+	int queue_length = hctx->host->usage;
+
+	if (queue_length >= threshold_high)
+		hctx->host->threshold_state = 1;
+	if (queue_length <= threshold_low)
+		hctx->host->threshold_state = 0;
+
+	int current_threshold = hctx->host->threshold_state ?
+		threshold_high : threshold_low;
+
+	char *with_optional = (hctx->host->usage <= current_threshold) ? "1" : "0";
+
+	proxy_set_header(con, "X-With-Optional", with_optional);
 
 	/* request header */
 	for (i = 0; i < con->request.headers->used; i++) {

@@ -154,6 +154,7 @@ typedef struct {
 	size_t balance;
 
 	int usage; /* fair-balancing needs the no. of connections active on this host */
+	int threshold_state;
 	int last_used_ndx; /* round robin */
 } data_fastcgi;
 
