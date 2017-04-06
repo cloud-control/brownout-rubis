@@ -1,5 +1,15 @@
 FROM php:5.6-apache
 MAINTAINER Cristian Klein <cristiklein@gmail.com>
 COPY PHP/ /var/www/html/PHP/
-RUN docker-php-ext-install mysql
+RUN docker-php-ext-install \
+    mysql \
+    sockets
 RUN echo "output_buffering=4096" >> /usr/local/etc/php/php.ini
+
+# Install controller prerequisites
+RUN apt-get update \
+    && apt-get install -y \
+        python \
+        python-numpy
+
+CMD /var/www/html/PHP/localController.py & apache2-foreground > /dev/null
