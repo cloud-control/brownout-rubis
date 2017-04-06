@@ -12,4 +12,8 @@ RUN apt-get update \
         python \
         python-numpy
 
+# Support at least 1000 simultaneous connections
+COPY apache-many-connections.conf /etc/apache2/conf-available
+RUN a2enconf apache-many-connections
+
 CMD /var/www/html/PHP/localController.py & apache2-foreground > /dev/null
