@@ -214,6 +214,8 @@ def main():
 			controller.runControlLoop()
 
 			# Report performance to RM
+			# TODO: Decide what information should be sent to the resource
+			# manager
 			rmSocket.sendto(str(controller.matchingValue), (options.rmIp, options.rmPort))
 
 			# Output service level
