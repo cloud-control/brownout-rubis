@@ -1,6 +1,5 @@
 FROM php:5.6-apache
 MAINTAINER Cristian Klein <cristiklein@gmail.com>
-COPY PHP/ /var/www/html/PHP/
 RUN docker-php-ext-install \
     mysql \
     sockets
@@ -15,5 +14,7 @@ RUN apt-get update \
 # Support at least 1000 simultaneous connections
 COPY apache-many-connections.conf /etc/apache2/conf-available
 RUN a2enconf apache-many-connections
+
+COPY PHP/ /var/www/html/PHP/
 
 CMD /var/www/html/PHP/localController.py & apache2-foreground > /dev/null
