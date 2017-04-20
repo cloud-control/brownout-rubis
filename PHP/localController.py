@@ -96,6 +96,7 @@ class Controller:
 			self.matchingValue = 0
 
 		utilization = float('nan') # XXX: not implemented (does it make sense for the real environment?)
+		arrival_rate = len(self.latestLatencies) / self.controlPeriod
 
 		# Report
 		valuesToOutput = [ \
@@ -105,6 +106,7 @@ class Controller:
 			self.theta, \
 			utilization, \
 			self.matchingValue, \
+			arrival_rate, \
 		]
 		print(','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
