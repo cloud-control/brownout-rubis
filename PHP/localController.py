@@ -184,12 +184,14 @@ def main():
 	appSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	appSocket.bind(("localhost", 2712))
 
-	# Setup socket to send matching values
+	# Setup socket to negotiate capacity
 	rmSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	rmSocket.bind(("0.0.0.0", 2713))
 
 	# Initialize control loop
 	poll = select.poll()
 	poll.register(appSocket, select.POLLIN)
+	poll.register(rmSocket, select.POLLIN)
 	lastControl = now()
 	totalRequests = 0
 
@@ -212,9 +214,14 @@ def main():
 
 		_now = now() # i.e., all following operations are "atomic" with respect to time
 		# If we received a latency report, record it
-		if events:
-			data, address = appSocket.recvfrom(4096, socket.MSG_DONTWAIT)
-			controller.reportLatency(float(data))
+		for fd, event in events:
+			if fd == appSocket.fileno():
+				data, address = appSocket.recvfrom(4096, socket.MSG_DONTWAIT)
+				controller.reportLatency(float(data))
+			elif fd == rmSocket.fileno():
+				data, address = rmSocket.recvfrom(4096, socket.MSG_DONTWAIT)
+				# TODO
+				print('Got data from resource managed: ' + data)
 
 		# Run control algorithm if it's time for it
 		if _now - lastControl >= options.controlPeriod:
@@ -223,7 +230,10 @@ def main():
 			# Report performance to RM
 			# TODO: Decide what information should be sent to the resource
 			# manager
-			rmSocket.sendto(str(controller.matchingValue), (options.rmIp, options.rmPort))
+			c_min_now = controller.ewma_arrival_rate / 100 # profiled offline
+			c_max_now = controller.ewma_arrival_rate / 10 # profiled offline
+			rmSocket.sendto('c_min_now={0} c_max_now={1}'.format(c_min_now,
+				c_max_now), (options.rmIp, options.rmPort))
 
 			# Output service level
 			with open('/tmp/serviceLevel.tmp', 'w') as f:
