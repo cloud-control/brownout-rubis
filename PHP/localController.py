@@ -56,6 +56,8 @@ class Controller:
 		self.theta = initialTheta
 		## matching value (controller output)
 		self.matchingValue = 0
+		## EWMA arrival rate
+		self.ewma_arrival_rate = 0
 
 	## Runs the control loop.
 	# Basically retrieves self.lastestLatencies and computes a new self.theta.
@@ -97,6 +99,8 @@ class Controller:
 
 		utilization = float('nan') # XXX: not implemented (does it make sense for the real environment?)
 		arrival_rate = len(self.latestLatencies) / self.controlPeriod
+		self.ewma_arrival_rate = self.ewma_arrival_rate * 0.5 \
+			+ arrival_rate * 0.5
 
 		# Report
 		valuesToOutput = [ \
@@ -107,6 +111,7 @@ class Controller:
 			utilization, \
 			self.matchingValue, \
 			arrival_rate, \
+			self.ewma_arrival_rate, \
 		]
 		print(','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
