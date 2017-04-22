@@ -126,11 +126,6 @@ class Controller:
 def now():
 	return time.time()
 
-def avg(a):
-	if len(a) == 0:
-		return float('nan')
-	return sum(a) / len(a)
-
 def median(a):
 	# assumes a is sorted
 	n = len(a)
@@ -242,7 +237,6 @@ def main():
 
 			# Prepare for next control action
 			lastControl = _now
-	s.close()
 
 if __name__ == "__main__":
 	main()
