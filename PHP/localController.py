@@ -8,6 +8,7 @@ import numpy as np
 from optparse import OptionParser
 import os
 import select
+import shlex
 import socket
 import sys
 from time import sleep
@@ -190,6 +191,10 @@ def main():
 	lastControl = now()
 	totalRequests = 0
 
+	# Economic stuff
+	p_b = 0
+	p_d = 0
+
 	# Output initial service level
 	with open('/tmp/serviceLevel.tmp', 'w') as f:
 		print(options.initialTheta, file = f)
@@ -202,6 +207,7 @@ def main():
 		pole = options.pole, \
 		controlPeriod = options.controlPeriod)
 
+	newPrices = False
 	while True:
 		# Wait for next control iteration or message from application
 		waitFor = max(ceil((lastControl + options.controlPeriod - now()) * 1000), 1)
@@ -215,20 +221,23 @@ def main():
 				controller.reportLatency(float(data))
 			elif fd == rmSocket.fileno():
 				data, address = rmSocket.recvfrom(4096, socket.MSG_DONTWAIT)
-				# TODO
-				print('Got data from resource managed: ' + data)
+				req = dict(token.split('=') for token in shlex.split(data))
+				logging.debug('Got RM request: %s', req)
+				p_b = getattr(req, 'p_b', p_b)
+				p_d = getattr(req, 'p_d', p_d)
+				newPrices = True
 
 		# Run control algorithm if it's time for it
 		if _now - lastControl >= options.controlPeriod:
 			controller.runControlLoop()
 
-			# Report performance to RM
-			# TODO: Decide what information should be sent to the resource
-			# manager
+			# Ask required capacity
 			c_min_now = controller.ewma_arrival_rate / 100 # profiled offline
 			c_max_now = controller.ewma_arrival_rate / 10 # profiled offline
-			rmSocket.sendto('c_min_now={0} c_max_now={1}'.format(c_min_now,
-				c_max_now), (options.rmIp, options.rmPort))
+			# TODO: How to compute c_i
+			c_i = max(c_max_now, 1)
+			rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
+				options.rmPort))
 
 			# Output service level
 			with open('/tmp/serviceLevel.tmp', 'w') as f:
@@ -237,6 +246,16 @@ def main():
 
 			# Prepare for next control action
 			lastControl = _now
+
+		# Request new base and dynamic capacities
+		if newPrices:
+			# TODO: Devise formula for c_b and c_d.
+			# For the purpose of the prototype, it might make sense to define
+			# these statically, i.e., externalize computing c_b and c_d.
+			c_b = 1
+			c_d = 10
+			rmSocket.sendto('c_b={0} c_d={1}'.format(c_b, c_d), (options.rmIp,
+				options.rmPort))
 
 if __name__ == "__main__":
 	main()
