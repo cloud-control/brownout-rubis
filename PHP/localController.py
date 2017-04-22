@@ -249,6 +249,7 @@ def main():
 
 		# Request new base and dynamic capacities
 		if newPrices:
+			newPrices = False
 			# TODO: Devise formula for c_b and c_d.
 			# For the purpose of the prototype, it might make sense to define
 			# these statically, i.e., externalize computing c_b and c_d.
