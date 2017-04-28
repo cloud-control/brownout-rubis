@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 
+from collections import namedtuple
 import datetime
 import logging
 from math import ceil
@@ -159,6 +160,36 @@ class UnixTimeStampFormatter(logging.Formatter):
 	def formatTime(self, record, datefmt = None):
 		return "{0:.6f}".format(record.created)
 
+def compute_optimal_cb(pb, pd, fc, xc):
+	# assuming a uniform distribution if no pdf is given
+	cmin = min(xc)
+	cmax = max(xc)
+	if fc is None:
+		return cmin + (pb/pd)*(cmax-cmin);
+	else:
+		price_ratio = (pb/pd);
+		for i in reversed(range(len(fc))):
+			if sum(fc[i:])>price_ratio:
+				break
+		return xc[i]
+
+Revenue = namedtuple('Revenue', ['gamma', 'k', 'beta'])
+
+def compute_optimal_cd(pd, rev, fc, xc):
+	# assuming a uniform distribution if no pdf is given
+	cmax = max(xc)
+	if fc is None:
+		xc = np.linspace(min(xc), max(xc), 100)
+		fc = 0.01*np.ones(100)
+	y = np.zeros(len(xc))
+	for i in range(len(xc)):
+		cd = xc[i]
+		upper =	rev.k*rev.gamma*cd**(rev.k)*sum((xc[i:]**(rev.beta-rev.k))*fc[i:])
+		lower = pd*sum(fc[i:])
+		y[i] = upper / lower - cd
+	i = np.argmin(np.abs(y))
+	return xc[i]
+
 def main():
 	# Set up logging
 	logChannel = logging.StreamHandler()
@@ -194,6 +225,7 @@ def main():
 	# Economic stuff
 	p_b = 0
 	p_d = 0
+	revenue = Revenu(gamma=2.28e-6/0.000294586561034, k=0.7, beta=1)
 
 	# Output initial service level
 	with open('/tmp/serviceLevel.tmp', 'w') as f:
@@ -207,6 +239,9 @@ def main():
 		pole = options.pole, \
 		controlPeriod = options.controlPeriod)
 
+	c_b = 1 # initial guess
+	c_d = 10 # initial guess
+	c_i_s = []
 	newPrices = False
 	while True:
 		# Wait for next control iteration or message from application
@@ -234,8 +269,8 @@ def main():
 			# Ask required capacity
 			c_min_now = controller.ewma_arrival_rate / 100 # profiled offline
 			c_max_now = controller.ewma_arrival_rate / 10 # profiled offline
-			# TODO: How to compute c_i
-			c_i = max(c_max_now, 1)
+			c_i = min(c_max_now, c_d)
+			c_i_s.append(c_max_now)
 			rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
 				options.rmPort))
 
@@ -249,14 +284,21 @@ def main():
 
 		# Request new base and dynamic capacities
 		if newPrices:
-			newPrices = False
-			# TODO: Devise formula for c_b and c_d.
-			# For the purpose of the prototype, it might make sense to define
-			# these statically, i.e., externalize computing c_b and c_d.
-			c_b = 1
-			c_d = 10
+			if c_i_s:
+				f_c, x_c = np.histogram(c_i_s, bins=100)
+				sum_f_c = sum(f_c)
+				f_c = map(lambda x: x / sum_f_c, f_c)
+			else:
+				f_c, x_c = None, [1, 30]
+
+			c_b = compute_optimal_cb(p_b, p_d, f_c, x_c)
+			c_d = compute_optimal_cd(p_d, revenue, f_c, x_c)
+
 			rmSocket.sendto('c_b={0} c_d={1}'.format(c_b, c_d), (options.rmIp,
 				options.rmPort))
+
+			newPrices = False
+			c_i_s = []
 
 if __name__ == "__main__":
 	main()
