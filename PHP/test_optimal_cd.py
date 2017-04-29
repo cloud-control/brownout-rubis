@@ -19,7 +19,9 @@ compute_optimal_cd(pd, revenue, fc, xc)
 def toNpArray(line):
     return np.array(map(float, line.split(',')[:-1]))
 
-rev = Revenue(gamma=2.28e-6, beta=1, k=0.7)
+core_cap = 2926
+gamma = 0.08/(12*core_cap)
+rev = Revenue(gamma=gamma, beta=1, k=0.7)
 for i, pb, pd, cb, cd, xc, fc in zip(
         xrange(100),
         map(float, open('pricing_tests/pb.out').readlines()),
