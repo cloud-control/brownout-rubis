@@ -184,9 +184,8 @@ def compute_optimal_cd(pd, rev, fc, xc):
 	y = np.zeros(len(xc))
 	for i in range(len(xc)):
 		cd = xc[i]
-		upper =	rev.k*rev.gamma*cd**(rev.k)*sum((xc[i:]**(rev.beta-rev.k))*fc[i:])
-		lower = pd*sum(fc[i:])
-		y[i] = upper / lower - cd
+		y[i] = rev.k*rev.gamma*cd**(rev.k)*sum((xc[i:]**(rev.beta-rev.k))*fc[i:]) \
+			- cd*pd*sum(fc[i:])
 	i = np.argmin(np.abs(y))
 	return xc[i]
 
@@ -289,6 +288,8 @@ def main():
 				f_c, x_c = np.histogram(c_i_s, bins=100)
 				sum_f_c = sum(f_c)
 				f_c = map(lambda x: x / sum_f_c, f_c)
+				# TODO: Proper centeroid conversion
+				xc = xc[:-1]
 			else:
 				f_c, x_c = None, [1, 30]
 
