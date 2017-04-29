@@ -160,26 +160,24 @@ class UnixTimeStampFormatter(logging.Formatter):
 	def formatTime(self, record, datefmt = None):
 		return "{0:.6f}".format(record.created)
 
-def compute_optimal_cb(pb, pd, fc, xc):
+Revenue = namedtuple('Revenue', ['gamma', 'k', 'beta'])
+
+def compute_optimal_cb_cd(rev, pb, pd, fc, xc):
 	# assuming a uniform distribution if no pdf is given
 	cmin = min(xc)
 	cmax = max(xc)
 	if fc is None:
-		return cmin + (pb/pd)*(cmax-cmin);
+		cb_o = cmin + (pb/pd)*(cmax-cmin);
 	else:
 		price_ratio = (pb/pd);
 		for i in reversed(range(len(fc))):
 			if sum(fc[i:])>price_ratio:
 				break
-		return xc[i]
+		cb_o = xc[i]
 
-Revenue = namedtuple('Revenue', ['gamma', 'k', 'beta'])
-
-def compute_optimal_cd(pd, rev, fc, xc):
 	# assuming a uniform distribution if no pdf is given
-	cmax = max(xc)
 	if fc is None:
-		xc = np.linspace(min(xc), max(xc), 100)
+		xc = np.linspace(cmin, cmax, 100)
 		fc = 0.01*np.ones(100)
 	y = np.zeros(len(xc))
 	for i in range(len(xc)):
@@ -187,7 +185,12 @@ def compute_optimal_cd(pd, rev, fc, xc):
 		y[i] = rev.k*rev.gamma*cd**(rev.k)*sum((xc[i:]**(rev.beta-rev.k))*fc[i:]) \
 			- cd*pd*sum(fc[i:])
 	i = np.argmin(np.abs(y))
-	return xc[i]
+	cd_o = xc[i]
+
+	if cd_o < cb_o:
+		cd_o = cmax
+	
+	return cb_o, cd_o
 
 def main():
 	# Set up logging
@@ -292,8 +295,7 @@ def main():
 			else:
 				f_c, x_c = None, [1, 30]
 
-			c_b = compute_optimal_cb(p_b, p_d, f_c, x_c)
-			c_d = compute_optimal_cd(p_d, revenue, f_c, x_c)
+			c_b, c_d = compute_optimal_cb_cd(rev, p_b, p_d, f_c, x_c)
 
 			rmSocket.sendto('c_b={0} c_d={1}'.format(c_b, c_d), (options.rmIp,
 				options.rmPort))
