@@ -286,8 +286,8 @@ def main():
 			arrivalRate = arrivalsSinceLastCapacityControl / options.capacityControlPeriod
 			# Ask required capacity
 			c_i = arrivalRate / 10 # profiled offline
-			c_i = max(min(c_i, c_d), c_b)
-			c_i_s.append(c_max_now)
+			c_i_s.append(c_i) # store value before trimming
+			c_i = max(c_b, min(c_i, c_d))
 			rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
 				options.rmPort))
 
