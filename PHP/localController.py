@@ -269,7 +269,7 @@ def main():
 			# Ask required capacity
 			c_min_now = controller.ewma_arrival_rate / 100 # profiled offline
 			c_max_now = controller.ewma_arrival_rate / 10 # profiled offline
-			c_i = max(min(c_max_now, c_d), 0.1)
+			c_i = max(min(c_max_now, c_d), 1)
 			c_i_s.append(c_max_now)
 			rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
 				options.rmPort))
