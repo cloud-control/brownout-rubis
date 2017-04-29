@@ -6,7 +6,7 @@ from localController import *
 pb=5
 pd=10
 
-capacity_scaling_factor=0.000303810674805
+capacity_scaling_factor=3.03810674805e-05
 revenue = Revenue(gamma=2.28e-6/capacity_scaling_factor, k=0.7, beta=1.0)
 assert_almost_equals(compute_optimal_cd(pd, revenue, None, [1, 30]), 1) # ???
 
