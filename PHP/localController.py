@@ -288,8 +288,7 @@ def main():
 				f_c, x_c = np.histogram(c_i_s, bins=100)
 				sum_f_c = sum(f_c)
 				f_c = map(lambda x: x / sum_f_c, f_c)
-				# TODO: Proper centeroid conversion
-				x_c = x_c[:-1]
+				x_c = (x_c[:-1] + x_c[1:]) / 2
 			else:
 				f_c, x_c = None, [1, 30]
 
