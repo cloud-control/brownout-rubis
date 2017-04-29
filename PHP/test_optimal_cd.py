@@ -13,3 +13,8 @@ assert_almost_equals(compute_optimal_cd(pd, revenue, None, [1, 30]), 1) # ???
 xc = np.array([0  , 1  , 2  , 3  , 4  , 5  , 6  ])
 fc = np.array([0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.1])
 assert_almost_equals(compute_optimal_cd(pd, revenue, fc, xc), 0)
+
+fc, xc = np.histogram([1, 30], bins=100)
+sum_fc = sum(fc)
+fc = map(lambda x: x/sum_fc, fc)
+assert_almost_equals(compute_optimal_cd(pd, revenue, fc, xc), 0)
