@@ -295,7 +295,7 @@ def main():
 			else:
 				f_c, x_c = None, [1, 30]
 
-			c_b, c_d = compute_optimal_cb_cd(rev, p_b, p_d, f_c, x_c)
+			c_b, c_d = compute_optimal_cb_cd(revenue, p_b, p_d, f_c, x_c)
 
 			rmSocket.sendto('c_b={0} c_d={1}'.format(c_b, c_d), (options.rmIp,
 				options.rmPort))
