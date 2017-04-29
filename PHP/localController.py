@@ -205,6 +205,8 @@ def main():
 	parser.add_option("--setPoint", type="float", help="keep maximum latency around this value (default: %default)", default = 1)
 	parser.add_option("--initialTheta", type="float", help="set the initial dimmer value; useful when no control is present (default: %default)", default = 0.5)
 	parser.add_option("--controlPeriod", type="float", help="time between control iterations (default: %default)", default = 0.5)
+	parser.add_option("--capacityControlPeriod", type="float",
+			help="time between capacity control iterations (default: %default)", default = 5)
 	parser.add_option("--rmIp", type="string", help="send matching values to this IP (default: %default)", default = "192.168.122.1")
 	parser.add_option("--rmPort", type="int", help="send matching values to this UDP port (default: %default)", default = 2712)
 	(options, args) = parser.parse_args()
@@ -246,6 +248,7 @@ def main():
 	c_d = 10 # initial guess
 	c_i_s = []
 	newPrices = False
+	arrivalsSinceLastCapacityControl = 0
 	while True:
 		# Wait for next control iteration or message from application
 		waitFor = max(ceil((lastControl + options.controlPeriod - now()) * 1000), 1)
@@ -257,6 +260,7 @@ def main():
 			if fd == appSocket.fileno():
 				data, address = appSocket.recvfrom(4096, socket.MSG_DONTWAIT)
 				controller.reportLatency(float(data))
+				arrivalsSinceLastCapacityControl += 1
 			elif fd == rmSocket.fileno():
 				data, address = rmSocket.recvfrom(4096, socket.MSG_DONTWAIT)
 				req = dict(token.split('=') for token in shlex.split(data))
@@ -269,14 +273,6 @@ def main():
 		if _now - lastControl >= options.controlPeriod:
 			controller.runControlLoop()
 
-			# Ask required capacity
-			c_min_now = controller.ewma_arrival_rate / 100 # profiled offline
-			c_max_now = controller.ewma_arrival_rate / 10 # profiled offline
-			c_i = max(min(c_max_now, c_d), 1)
-			c_i_s.append(c_max_now)
-			rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
-				options.rmPort))
-
 			# Output service level
 			with open('/tmp/serviceLevel.tmp', 'w') as f:
 				print(controller.theta, file = f)
@@ -284,6 +280,18 @@ def main():
 
 			# Prepare for next control action
 			lastControl = _now
+
+		if _now - lastCapacityControl >= options.capacityControlPeriod:
+			arrivalRate = arrivalsSinceLastCapacityControl / options.capacityControlPeriod
+			# Ask required capacity
+			c_i = arrivalRate / 10 # profiled offline
+			c_i = max(min(c_i, c_d), c_b)
+			c_i_s.append(c_max_now)
+			rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
+				options.rmPort))
+
+			arrivalsSinceLastCapacityControl = 0
+			lastCapacityControl = _now
 
 		# Request new base and dynamic capacities
 		if newPrices:
@@ -296,6 +304,10 @@ def main():
 				f_c, x_c = None, [1, 30]
 
 			c_b, c_d = compute_optimal_cb_cd(revenue, p_b, p_d, f_c, x_c)
+			if c_b < 1:
+				c_b = 1
+			if c_d < c_b:
+				c_d = c_b
 
 			rmSocket.sendto('c_b={0} c_d={1}'.format(c_b, c_d), (options.rmIp,
 				options.rmPort))
