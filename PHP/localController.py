@@ -224,6 +224,7 @@ def main():
 	poll.register(appSocket, select.POLLIN)
 	poll.register(rmSocket, select.POLLIN)
 	lastControl = now()
+	lastCapacityControl = now()
 	totalRequests = 0
 
 	# Economic stuff
