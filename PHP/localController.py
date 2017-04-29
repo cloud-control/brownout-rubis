@@ -225,7 +225,8 @@ def main():
 	# Economic stuff
 	p_b = 0
 	p_d = 0
-	revenue = Revenu(gamma=2.28e-6/0.000294586561034, k=0.7, beta=1)
+	capacity_scaling_factor=0.000303810674805
+	revenue = Revenu(gamma=2.28e-6/capacity_scaling_factor, k=0.7, beta=1)
 
 	# Output initial service level
 	with open('/tmp/serviceLevel.tmp', 'w') as f:
