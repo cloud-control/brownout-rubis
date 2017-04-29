@@ -12,8 +12,7 @@ RUN apt-get update \
         python-numpy
 
 # Support at least 1000 simultaneous connections
-COPY apache-many-connections.conf /etc/apache2/conf-available
-RUN a2enconf apache-many-connections
+COPY mpm_prefork.conf /etc/apache2/mods-available/
 
 COPY PHP/ /var/www/html/PHP/
 
