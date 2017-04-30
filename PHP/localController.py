@@ -185,6 +185,8 @@ def compute_optimal_cb_cd(rev, pb, pd, fc, xc):
 		y[i] = rev.k*rev.gamma*cd**(rev.k)*sum((xc[i:]**(rev.beta-rev.k))*fc[i:]) \
 			- cd*pd*sum(fc[i:])
 	i = np.argmin(np.abs(y))
+	if (i>100) and not (np.average(y[i-100:i])>y[i]): # Checking the negative slope condition for the optimal point
+		i = -1 # end
 	cd_o = xc[i]
 
 	if cd_o < cb_o:
