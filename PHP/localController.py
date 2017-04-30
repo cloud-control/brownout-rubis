@@ -188,7 +188,7 @@ def compute_optimal_cb_cd(rev, pb, pd, fc, xc):
 	cd_o = xc[i]
 
 	if cd_o < cb_o:
-		cd_o = cmax
+		cb_o = cd_o
 	
 	return cb_o, cd_o
 
