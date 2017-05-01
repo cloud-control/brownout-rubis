@@ -299,7 +299,8 @@ def main():
 				# We need more capacity *now*
 				c_i = c_d
 			# XXX: Workaround
-			c_i = c_d
+			c_i, last_c_i = c_d, 0
+
 			if last_c_i != c_i:
 				rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
 					options.rmPort))
