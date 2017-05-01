@@ -303,6 +303,9 @@ def main():
 				rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
 					options.rmPort))
 				last_c_i = c_i
+			else:
+				# heartbeat
+				rmSocket.sendto('ping=ping', (options.rmIp, options.rmPort))
 
 			arrivalsSinceLastCapacityControl = 0
 			lastCapacityControl = _now
