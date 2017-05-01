@@ -265,11 +265,10 @@ def main():
 				data, address = appSocket.recvfrom(4096, socket.MSG_DONTWAIT)
 				controller.reportLatency(float(data))
 
+				arrivalsSinceLastCapacityControl += 1
 				if float(data) > 2*options.setPoint:
 					# get maximum capacity *now*
 					lastCapacityControl = 0
-				else:
-					arrivalsSinceLastCapacityControl += 1
 			elif fd == rmSocket.fileno():
 				data, address = rmSocket.recvfrom(4096, socket.MSG_DONTWAIT)
 				req = dict(token.split('=') for token in shlex.split(data))
@@ -291,15 +290,14 @@ def main():
 			lastControl = _now
 
 		if _now - lastCapacityControl >= options.capacityControlPeriod:
+			arrivalRate = arrivalsSinceLastCapacityControl / options.capacityControlPeriod
+			# Ask required capacity
+			c_i = arrivalRate / 10 # profiled offline
+			c_i_s.append(c_i) # store value before trimming
+			c_i = max(c_b, min(c_i, c_d))
 			if lastCapacityControl == 0:
 				# We need more capacity *now*
 				c_i = c_d
-			else:
-				arrivalRate = arrivalsSinceLastCapacityControl / options.capacityControlPeriod
-				# Ask required capacity
-				c_i = arrivalRate / 10 # profiled offline
-			c_i_s.append(c_i) # store value before trimming
-			c_i = max(c_b, min(c_i, c_d))
 			if last_c_i != c_i:
 				rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
 					options.rmPort))
