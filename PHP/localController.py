@@ -249,6 +249,7 @@ def main():
 
 	c_b = 1 # initial guess
 	c_d = 10 # initial guess
+	last_c_i = 0
 	c_i_s = []
 	newPrices = False
 	arrivalsSinceLastCapacityControl = 0
@@ -299,8 +300,10 @@ def main():
 				c_i = arrivalRate / 10 # profiled offline
 			c_i_s.append(c_i) # store value before trimming
 			c_i = max(c_b, min(c_i, c_d))
-			rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
-				options.rmPort))
+			if last_c_i != c_i:
+				rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
+					options.rmPort))
+				last_c_i = c_i
 
 			arrivalsSinceLastCapacityControl = 0
 			lastCapacityControl = _now
