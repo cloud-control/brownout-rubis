@@ -266,7 +266,7 @@ def main():
 				controller.reportLatency(float(data))
 
 				arrivalsSinceLastCapacityControl += 1
-				if float(data) > 2*options.setPoint:
+				if float(data) > 5*options.setPoint:
 					# get maximum capacity *now*
 					lastCapacityControl = 0
 			elif fd == rmSocket.fileno():
@@ -298,8 +298,6 @@ def main():
 			if lastCapacityControl == 0:
 				# We need more capacity *now*
 				c_i = c_d
-			# XXX: Workaround
-			c_i, last_c_i = c_d, 0
 
 			if last_c_i != c_i:
 				rmSocket.sendto('c_i={0}'.format(c_i), (options.rmIp,
