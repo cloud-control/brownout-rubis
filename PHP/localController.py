@@ -232,7 +232,7 @@ def main():
 	# Economic stuff
 	p_b = 1.42401458191e-06
 	p_d = 1.99362041467e-06
-	capacity_scaling_factor=3.03810674805e-05
+	capacity_scaling_factor=2e-05
 	revenue = Revenue(gamma=2.28e-6/capacity_scaling_factor, k=0.7, beta=1)
 
 	# Output initial service level
