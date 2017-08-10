@@ -2,11 +2,22 @@
 <html>
   <body>
     <?php
-    /* Get dimmer from file */
-    $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
-    header("X-Dimmer: $serviceLevel");
-    $r = rand(0, 9999) / 10000;
-    $withOptional = ($r < $serviceLevel);
+    /* Should we serve optional content?
+     * An external component might have already decided for us.
+     */
+    $withOptional = FALSE;
+    if (isset($_SERVER['HTTP_X_WITH_OPTIONAL']))
+    {
+      $withOptional = $_SERVER['HTTP_X_WITH_OPTIONAL'];
+    }
+    else
+    {
+      /* Get dimmer from file */
+      $serviceLevel = doubleval(@file_get_contents("/tmp/serviceLevel"));
+      header("X-Dimmer: $serviceLevel");
+      $r = rand(0, 9999) / 10000;
+      $withOptional = ($r < $serviceLevel);
+    }
     header("X-WithOptional: $withOptional");
 
     $scriptName = "ViewItem.php";
