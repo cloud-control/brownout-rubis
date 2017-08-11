@@ -1,0 +1,1 @@
+GRANT ALL PRIVILEGES ON rubis.* TO 'cecchet'@'%' IDENTIFIED BY PASSWORD "";
