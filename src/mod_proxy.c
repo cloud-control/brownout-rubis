@@ -110,6 +110,7 @@ typedef struct {
 	plugin_data *plugin_data; /* dump pointer */
 
 	struct timespec request_start_time; /* when the first byte of the last request was sent to the backend */
+	int with_optional; /* whether optional content was requested from the backend */
 } handler_ctx;
 
 
@@ -471,9 +472,9 @@ static int proxy_create_env(server *srv, handler_ctx *hctx) {
 	int queue_length_setpoint = 5;
 	int queue_length = hctx->host->usage;
 
-	char *with_optional = (queue_length <= queue_length_setpoint) ? "1" : "0";
+	hctx->with_optional = (queue_length <= queue_length_setpoint);
 
-	proxy_set_header(con, "X-With-Optional", with_optional);
+	proxy_set_header(con, "X-With-Optional", hctx->with_optional ? "1" : "0");
 
 	/* request header */
 	for (i = 0; i < con->request.headers->used; i++) {
@@ -758,9 +759,10 @@ static int proxy_demux_response(server *srv, handler_ctx *hctx) {
 		/* Record response time */
 		struct timespec request_end_time;
 		clock_gettime(CLOCK_MONOTONIC, &request_end_time);
-		double responseTime =
+		double response_time =
 			(request_end_time.tv_nsec - hctx->request_start_time.tv_nsec) / 1000000000.0 +
 			(request_end_time.tv_sec  - hctx->request_start_time.tv_sec);
+		//fprintf(stderr, "%f %s\n", response_time, hctx->with_optional ? "t" : "f");
 	}
 
 	return fin;
