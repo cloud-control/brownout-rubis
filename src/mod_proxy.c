@@ -570,8 +570,6 @@ static int proxy_response_parse(server *srv, connection *con, plugin_data *p, bu
 
 	/* \r\n -> \0\0 */
 
-	// TODO: call reverse path of controller
-
 	buffer_copy_string_buffer(p->parse_response, in);
 
 	for (s = p->parse_response->ptr; NULL != (ns = strstr(s, "\r\n")); s = ns + 2) {
@@ -650,6 +648,18 @@ static int proxy_response_parse(server *srv, connection *con, plugin_data *p, bu
 
 			array_insert_unique(con->response.headers, (data_unset *)ds);
 		}
+	}
+
+	{
+	    data_string *ds;
+	    if (NULL == (ds = (data_string *)array_get_unused_element(con->response.headers, TYPE_STRING))) {
+		ds = data_response_init();
+	    }
+
+	    buffer_copy_string_len(ds->key, "Brownout-Upstream-Info", 22);
+	    buffer_copy_string(ds->value, controller_upstream_info(p->controller));
+
+	    array_insert_unique(con->response.headers, (data_unset *)ds);
 	}
 
 	return 0;

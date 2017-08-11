@@ -25,3 +25,7 @@ void controller_report_departure(controller_t c, double response_time, int with_
 int controller_with_optional(controller_t c, int current_queue_length) {
     return current_queue_length <= 5;
 }
+
+char *controller_upstream_info(controller_t c) {
+    return "5";
+}
