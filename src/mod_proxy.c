@@ -108,6 +108,8 @@ typedef struct {
 
 	connection *remote_conn;  /* dump pointer */
 	plugin_data *plugin_data; /* dump pointer */
+
+	struct timespec request_start_time; /* when the first byte of the last request was sent to the backend */
 } handler_ctx;
 
 
@@ -469,7 +471,7 @@ static int proxy_create_env(server *srv, handler_ctx *hctx) {
 	int queue_length_setpoint = 5;
 	int queue_length = hctx->host->usage;
 
-	char *with_optional = (hctx->host->usage <= queue_length_setpoint) ? "1" : "0";
+	char *with_optional = (queue_length <= queue_length_setpoint) ? "1" : "0";
 
 	proxy_set_header(con, "X-With-Optional", with_optional);
 
@@ -752,6 +754,13 @@ static int proxy_demux_response(server *srv, handler_ctx *hctx) {
 		joblist_append(srv, con);
 
 		fin = 1;
+
+		/* Record response time */
+		struct timespec request_end_time;
+		clock_gettime(CLOCK_MONOTONIC, &request_end_time);
+		double responseTime =
+			(request_end_time.tv_nsec - hctx->request_start_time.tv_nsec) / 1000000000.0 +
+			(request_end_time.tv_sec  - hctx->request_start_time.tv_sec);
 	}
 
 	return fin;
@@ -832,6 +841,8 @@ static handler_t proxy_write_request(server *srv, handler_ctx *hctx) {
 		proxy_create_env(srv, hctx);
 
 		proxy_set_state(srv, hctx, PROXY_STATE_WRITE);
+
+		clock_gettime(CLOCK_MONOTONIC, &hctx->request_start_time);
 
 		/* fall through */
 	case PROXY_STATE_WRITE:;
