@@ -1413,6 +1413,8 @@ TRIGGER_FUNC(mod_proxy_trigger) {
 		}
 	}
 
+	controller_run_control_loop(p->controller);
+
 	return HANDLER_GO_ON;
 }
 

@@ -1,6 +1,7 @@
 #include "controller.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 struct controller_s {
     int unused_yet;
@@ -28,4 +29,8 @@ int controller_with_optional(controller_t c, int current_queue_length) {
 
 char *controller_upstream_info(controller_t c) {
     return "5";
+}
+
+void controller_run_control_loop(controller_t c) {
+    fprintf(stderr, "%s\n", __FUNCTION__);
 }
