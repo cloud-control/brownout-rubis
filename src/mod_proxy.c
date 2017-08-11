@@ -14,6 +14,8 @@
 #include "inet_ntop_cache.h"
 #include "crc32.h"
 
+#include "controller.h"
+
 #include <sys/types.h>
 
 #include <unistd.h>
@@ -77,6 +79,7 @@ typedef struct {
 	plugin_config **config_storage;
 
 	plugin_config conf;
+	controller_t controller;
 } plugin_data;
 
 typedef enum {
@@ -152,6 +155,7 @@ INIT_FUNC(mod_proxy_init) {
 
 	p->parse_response = buffer_init();
 	p->balance_buf = buffer_init();
+	p->controller = controller_init();
 
 	return p;
 }
@@ -162,6 +166,7 @@ FREE_FUNC(mod_proxy_free) {
 
 	UNUSED(srv);
 
+	controller_free(p->controller);
 	buffer_free(p->parse_response);
 	buffer_free(p->balance_buf);
 
@@ -468,12 +473,7 @@ static int proxy_create_env(server *srv, handler_ctx *hctx) {
 	}
 	proxy_set_header(con, "X-Forwarded-Proto", con->uri.scheme->ptr);
 
-	// TODO: call forward path part of controller
-	int queue_length_setpoint = 5;
-	int queue_length = hctx->host->usage;
-
-	hctx->with_optional = (queue_length <= queue_length_setpoint);
-
+	hctx->with_optional = controller_with_optional(hctx->plugin_data->controller, hctx->host->usage);
 	proxy_set_header(con, "X-With-Optional", hctx->with_optional ? "1" : "0");
 
 	/* request header */
@@ -762,7 +762,7 @@ static int proxy_demux_response(server *srv, handler_ctx *hctx) {
 		double response_time =
 			(request_end_time.tv_nsec - hctx->request_start_time.tv_nsec) / 1000000000.0 +
 			(request_end_time.tv_sec  - hctx->request_start_time.tv_sec);
-		//fprintf(stderr, "%f %s\n", response_time, hctx->with_optional ? "t" : "f");
+		controller_report_departure(p->controller, response_time, hctx->with_optional);
 	}
 
 	return fin;
@@ -845,6 +845,7 @@ static handler_t proxy_write_request(server *srv, handler_ctx *hctx) {
 		proxy_set_state(srv, hctx, PROXY_STATE_WRITE);
 
 		clock_gettime(CLOCK_MONOTONIC, &hctx->request_start_time);
+		controller_report_arrival(hctx->plugin_data->controller);
 
 		/* fall through */
 	case PROXY_STATE_WRITE:;
