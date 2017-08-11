@@ -5,13 +5,36 @@ Brownout is a software engineering paradigm to make cloud services more robust t
 
 This repository contains the source code of the brownout version of [RUBiS](http://rubis.ow2.org/), an e-commerce website prototype, mimicking eBay. RUBiS is a popular benchmark choice in cloud computing research.
 
-Brownout-compliance was achieved by adding recommendations to the PHP-version of RUBiS. They are only displayed with a certain probability, the dimmer value, read from `/tmp/serviceLevel`, which is also reflected in the `X-Dimmer` response header. Furthermore, each script sends the measured response time through [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) to `localhost` port 2712. To enable brownout, the local controller need to be running, which is located in `PHP/localController.py`.
-
 Usage
 -----
 
-Setting up RUBiS is a fairly involving task. It requires installing a web server, a database server and initializing the database, the latter being done using a Java-based user emulator. Furthermore, to make precise performance measurements, you need to make sure that the obtained deployment does not feature "noise", such as cron jobs firing up unexpectedly. If you want to go through this exercise by yourself, you may do so by following the [RUBiS installation guide](http://rubis.ow2.org/doc/install.html).
+**NOTE**: We are currently working on making deployment easier.
 
-However, we recommend you to contact us, so we can provide you with ready-to-use Xen VM images, of about 16GB, based on Ubuntu 12.04.3 LTS. Even if you are using a different hypervisor or prefer using a different operating system, starting from these VM images may save you a lot of time.
+Each branch contains a tier (`rubis-web-tier`, `rubis-db-tier`). Ensure you have [Docker](https://get.docker.com/) installed on your system.
 
-For questions or comments, please contact Cristian Klein <firstname.lastname@cs.umu.se>.
+1. **Build** Docker images:
+
+        for tier in web db; do
+            git clone -b rubis-$tier-tier --depth 1 https://github.com/cloud-control/brownout-rubis.git brownout-rubis-$tier-tier
+            (cd brownout-rubis-$tier-tier; docker build -t rubis-$tier-tier .)
+        done
+
+2. **Run** the Docker containers (type each command in a separate terminal):
+
+        docker run --rm -ti --name rubis-db-tier-0 rubis-db-tier
+        docker run --rm -ti --name rubis-web-tier-0 --link rubis-db-tier-0:mysql --publish 80:80 rubis-web-tier
+
+   The database tier might take 60 seconds to start, since it downloads the database dump on startal.
+
+3. **Test** if everything works: Open [this link](http://localhost/PHP/RandomItem.php); if you see the RUBiS logo and some items, then everything works fine.
+
+4. **Shutdown**: The code is meant to be stateless, so kill with fire!
+
+        for tier in web db; do
+            docker rm -f rubis-$tier-tier-0
+        done
+
+Contact
+-------
+
+For questions or comments, please contact Cristian Klein <cklein@cs.umu.se>.
