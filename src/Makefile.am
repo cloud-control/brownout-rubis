@@ -188,7 +188,8 @@ mod_usertrack_la_LIBADD = $(common_libadd)
 lib_LTLIBRARIES += mod_proxy.la
 mod_proxy_la_SOURCES = mod_proxy.c controller.c
 mod_proxy_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_proxy_la_LIBADD = $(common_libadd)
+mod_proxy_la_LIBADD = $(common_libadd) $(PYTHON_LIBS)
+mod_proxy_la_CFLAGS = $(PYTHON_CFLAGS)
 
 lib_LTLIBRARIES += mod_ssi.la
 mod_ssi_la_SOURCES = mod_ssi_exprparser.c mod_ssi_expr.c mod_ssi.c

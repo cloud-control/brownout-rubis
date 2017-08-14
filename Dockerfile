@@ -13,6 +13,7 @@ RUN \
         libtool \
         libpcre3-dev \
         pkg-config \
+        python-dev \
         zlib1g-dev
 
 COPY autogen.sh configure.ac distribute.sh.in COPYING /usr/src/lighttpd/
@@ -33,6 +34,7 @@ COPY tests/docroot/www/go/Makefile.am /usr/src/lighttpd/tests/docroot/www/go/
 COPY tests/docroot/www/indexfile/Makefile.am /usr/src/lighttpd/tests/docroot/www/indexfile/
 COPY tests/docroot/www/Makefile.am /usr/src/lighttpd/tests/docroot/www/
 COPY tests/Makefile.am /usr/src/lighttpd/tests/
+COPY m4/ax_python_devel.m4 /usr/src/lighttpd/m4/
 RUN \
     cd /usr/src/lighttpd; \
     ./autogen.sh; \

@@ -632,6 +632,19 @@ dnl build version-id
 LIGHTTPD_VERSION_ID=`echo $PACKAGE_VERSION | $AWK -F '.' '{print "(" $1 " << 16 | " $2 " << 8 | " $3 ")"}'`
 AC_DEFINE_UNQUOTED([LIGHTTPD_VERSION_ID], [$LIGHTTPD_VERSION_ID], [lighttpd-version-id])
 
+dnl Python
+
+AM_PATH_PYTHON(2.7.0)
+PY_PREFIX=`$PYTHON -c 'import sys ; print sys.prefix'`
+PYTHON_LIBS="-lpython$PYTHON_VERSION"
+PYTHON_CFLAGS="-I$PY_PREFIX/include/python$PYTHON_VERSION"
+PYTHON_CPPFLAGS="-I$PY_PREFIX/include/python$PYTHON_VERSION"
+AC_SUBST([PYTHON_LIBS])
+AC_SUBST([PYTHON_CFLAGS])
+AC_SUBST([PYTHON_CPPFLAGS])
+
+AX_PYTHON_DEVEL([>= 2.7])
+
 AC_CONFIG_FILES([Makefile src/Makefile
 		 doc/config/conf.d/Makefile \
 		 doc/config/vhosts.d/Makefile \
@@ -763,7 +776,6 @@ if test "x$UUID_LIBS" \!= x; then
 else
 	disable_feature="$disable_feature $features"
 fi
-
 
 dnl output
 
