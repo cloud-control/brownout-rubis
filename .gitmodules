@@ -1,0 +1,4 @@
+[submodule "brownout-lb-simulator"]
+	path = brownout-lb-simulator
+	url = git@github.com:cloud-control/brownout-lb-simulator.git
+	branch = cdc2017
