@@ -139,7 +139,6 @@ char *controller_upstream_info(controller_t c) {
 }
 
 void controller_run_control_loop(controller_t c) {
-    LOG_INFO();
     if (c->pRunControlLoop) {
         PyObject *toCall = c->pRunControlLoop;
         c->pRunControlLoop = 0;
@@ -188,7 +187,7 @@ Sim_add(Sim* self, PyObject *args) {
 
 static PyObject *
 Sim_output(Sim* self, PyObject *args) {
-    LOG_ERROR("not implemented");
+    LOG_INFO("%s", PyString_AsString(PyTuple_GetItem(args, 1)));
     return Py_None;
 }
 
