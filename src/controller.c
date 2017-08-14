@@ -14,6 +14,8 @@ static double now()
 
 #define LOG(level, fmt, ...) fprintf(stderr, "[%lf][%s][%s] " fmt "\n", now(), __FUNCTION__, level, ##__VA_ARGS__)
 
+#define LOG_INFO(fmt, ...)  LOG("info", fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)  LOG("warn", fmt, ##__VA_ARGS__)
 #define LOG_ERROR(fmt, ...) LOG("error", fmt, ##__VA_ARGS__)
 
 struct controller_s {
@@ -24,12 +26,19 @@ controller_t controller_init() {
     controller_t c = malloc(sizeof(struct controller_s));
 
     Py_Initialize();
-    PyObject *pName = PyString_FromString("cf_cascaded.py");
+    PyObject* sysPath = PySys_GetObject((char*)"path");
+    PyObject* curDir = PyString_FromString("./brownout-lb-simulator");
+    PyList_Insert(sysPath, 0, curDir);
+    Py_DECREF(curDir);
+
+    PyObject *pName = PyString_FromString("controllers.server.cf_cascaded");
     c->pModule = PyImport_Import(pName);
     Py_DECREF(pName);
 
-    if (c->pModule == 0)
-        LOG_ERROR("Could not load Python module; controller disabled");
+    if (c->pModule == 0) {
+        LOG_ERROR("Could not load Python module; aborting");
+        exit(1);
+    }
 
     return c;
 }

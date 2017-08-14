@@ -14,6 +14,7 @@ RUN \
         libpcre3-dev \
         pkg-config \
         python-dev \
+        python-numpy \
         zlib1g-dev
 
 COPY autogen.sh configure.ac distribute.sh.in COPYING /usr/src/lighttpd/
@@ -47,5 +48,7 @@ RUN \
     make -j8
 
 COPY lighttpd-brownout-test.conf start-lbb.sh /usr/src/lighttpd/
+
+COPY brownout-lb-simulator /usr/src/lighttpd/brownout-lb-simulator/
 
 CMD ( cd /usr/src/lighttpd; ./start-lbb.sh )
