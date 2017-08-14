@@ -100,9 +100,11 @@ void controller_free(controller_t c) {
 }
 
 void controller_report_arrival(controller_t c) {
+    PyObject_CallMethod(c->pController, "reportData", "bdiddb", 1, 0, 0, 0, 0, 0);
 }
 
-void controller_report_departure(controller_t c, double response_time, int with_optional) {
+void controller_report_departure(controller_t c, double response_time, int queue_length, int with_optional) {
+    PyObject_CallMethod(c->pController, "reportData", "bdiddb", 0, response_time, queue_length, 0, 0, with_optional);
 }
 
 int controller_with_optional(controller_t c, int current_queue_length) {

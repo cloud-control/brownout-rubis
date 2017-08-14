@@ -772,7 +772,7 @@ static int proxy_demux_response(server *srv, handler_ctx *hctx) {
 		double response_time =
 			(request_end_time.tv_nsec - hctx->request_start_time.tv_nsec) / 1000000000.0 +
 			(request_end_time.tv_sec  - hctx->request_start_time.tv_sec);
-		controller_report_departure(p->controller, response_time, hctx->with_optional);
+		controller_report_departure(p->controller, response_time, hctx->host->usage-1, hctx->with_optional);
 	}
 
 	return fin;
