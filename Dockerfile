@@ -11,8 +11,12 @@ RUN apt-get update \
         python \
         python-numpy
 
-# Support at least 1000 simultaneous connections
+# Support at least 1000 simultaneous connections and silence ServerName warning
 COPY mpm_prefork.conf /etc/apache2/mods-available/
+
+# Avoid ServerName warnings
+COPY servername.conf /etc/apache2/conf-available/
+RUN a2enconf servername
 
 COPY PHP/ /var/www/html/PHP/
 
