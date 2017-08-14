@@ -12,11 +12,11 @@ static double now()
     return ts.tv_nsec / 1000000000.0 + ts.tv_sec;
 }
 
-#define LOG(level, fmt, ...) fprintf(stderr, "[%lf][%s][%s] " fmt "\n", now(), __FUNCTION__, level, ##__VA_ARGS__)
+#define LOG(level, fmt, ...) fprintf(stderr, "[%lf][%s][%s] " fmt "\n%c", now(), __func__, level, __VA_ARGS__)
 
-#define LOG_INFO(fmt, ...)  LOG("info", fmt, ##__VA_ARGS__)
-#define LOG_WARN(fmt, ...)  LOG("warn", fmt, ##__VA_ARGS__)
-#define LOG_ERROR(fmt, ...) LOG("error", fmt, ##__VA_ARGS__)
+#define LOG_INFO(...)  LOG("info", __VA_ARGS__, 0)
+#define LOG_WARN(...)  LOG("warn", __VA_ARGS__, 0)
+#define LOG_ERROR(...) LOG("error", __VA_ARGS__, 0)
 
 struct controller_s {
     PyObject *pController;
