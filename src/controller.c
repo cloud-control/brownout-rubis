@@ -22,17 +22,17 @@ struct controller_s {
     PyObject *pController;
 };
 
-#define ABORT_WITH_PYERR(fmt, ...) \
+#define ABORT_WITH_PYERR(...) \
     do { \
         if (PyErr_Occurred()) \
             PyErr_Print(); \
-        LOG_ERROR(fmt, ##__VA_ARGS__); \
+        LOG_ERROR(__VA_ARGS__); \
         exit(1); \
     } while(0)
 
 controller_t controller_init() {
     controller_t c = malloc(sizeof(struct controller_s));
-    char fake_argv[] = { "" };
+    char *fake_argv[] = { "" };
 
     Py_SetProgramName(fake_argv[0]);
     Py_Initialize();
