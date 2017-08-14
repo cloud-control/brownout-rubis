@@ -20,7 +20,16 @@ static double now()
 
 struct controller_s {
     PyObject *pController;
+    PyObject *pRunControlLoop;
 };
+
+typedef struct {
+    PyObject_HEAD
+    controller_t c;
+} Sim;
+
+staticforward PyTypeObject SimType;
+
 
 #define ABORT_WITH_PYERR(...) \
     do { \
@@ -67,8 +76,12 @@ controller_t controller_init() {
     if (PyCallable_Check(pNewInstance) == 0)
         ABORT_WITH_PYERR("newInstance in Python controller is not callable; aborting");
 
+    PyType_Ready(&SimType);
+    Sim *pSim = PyObject_New(Sim, &SimType);
+    pSim->c = c;
+
     PyObject *pArgs = PyTuple_New(2);
-    PyTuple_SetItem(pArgs, 0, Py_None);
+    PyTuple_SetItem(pArgs, 0, (PyObject *)pSim);
     PyTuple_SetItem(pArgs, 1, Py_None);
     c->pController = PyObject_CallObject(pNewInstance, pArgs);
     Py_DECREF(pArgs);
@@ -93,7 +106,14 @@ void controller_report_departure(controller_t c, double response_time, int with_
 }
 
 int controller_with_optional(controller_t c, int current_queue_length) {
-    return current_queue_length <= 5;
+    PyObject *pRet = PyObject_CallMethod(c->pController, "withOptional", "i", current_queue_length);
+    PyObject *pFirst = PyTuple_GetItem(pRet, 0);
+    if (pFirst == Py_True)
+        return 1;
+    else if (pFirst == Py_False)
+        return 0;
+    LOG_ERROR("withOptional returned invalid value");
+    return 0;
 }
 
 char *controller_upstream_info(controller_t c) {
@@ -101,5 +121,78 @@ char *controller_upstream_info(controller_t c) {
 }
 
 void controller_run_control_loop(controller_t c) {
-    fprintf(stderr, "%s\n", __FUNCTION__);
+    LOG_INFO();
+    if (c->pRunControlLoop) {
+        PyObject *toCall = c->pRunControlLoop;
+        c->pRunControlLoop = 0;
+
+        PyObject *pRet = PyObject_Call(toCall, PyTuple_New(0), NULL);
+        if (pRet == 0)
+            PyErr_Print();
+        Py_XDECREF(pRet);
+
+        Py_DECREF(toCall);
+    }
 }
+
+static PyObject *
+Sim_add(Sim* self, PyObject *args) {
+    if (PyTuple_Size(args) != 2) {
+        LOG_ERROR("takes exactly 2 arguments (%ld given)", PyTuple_Size(args));
+        PyErr_BadArgument();
+        return 0;
+    }
+
+    PyObject *pWhen = PyTuple_GetItem(args, 0);
+    PyObject *pCallback = PyTuple_GetItem(args, 1);
+
+    double when = PyFloat_AsDouble(pWhen);
+    if (PyErr_Occurred()) {
+        LOG_ERROR("argument 1 must be float");
+        PyErr_BadArgument();
+        return 0;
+    }
+
+    if (PyCallable_Check(pCallback) == 0) {
+        LOG_ERROR("argument 2 must be callable");
+        PyErr_BadArgument();
+        return 0;
+    }
+
+    if (when != 1)
+        LOG_WARN("This (fake) simulator only supports events 1 second into the future (%lf requested)", when);
+
+    Py_INCREF(pCallback);
+    self->c->pRunControlLoop = pCallback;
+
+    return Py_None;
+}
+
+static PyObject *
+Sim_output(Sim* self, PyObject *args) {
+    LOG_ERROR("not implemented");
+    return Py_None;
+}
+
+static PyObject *
+Sim_getattr(PyObject *sim, PyObject *attr_name) {
+    if (strcmp(PyString_AsString(attr_name), "now") == 0)
+        return PyFloat_FromDouble(now());
+    return PyObject_GenericGetAttr(sim, attr_name);
+}
+
+static PyMethodDef Sim_methods[] = {
+    {"add", (PyCFunction)Sim_add, METH_VARARGS, "Callback this function"},
+    {"output", (PyCFunction)Sim_output, METH_VARARGS, "Output something"},
+    {NULL}  /* Sentinel */
+};
+
+static PyTypeObject SimType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "Sim",
+    .tp_basicsize = sizeof(Sim),
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_methods = Sim_methods,
+    .tp_getattro = Sim_getattr,
+};
+
