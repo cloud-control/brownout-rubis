@@ -100,22 +100,32 @@ void controller_free(controller_t c) {
 }
 
 void controller_report_arrival(controller_t c) {
-    PyObject_CallMethod(c->pController, "reportData", "bdiddb", 1, 0, 0, 0, 0, 0);
+    PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb", 1, 0, 0, 0, 0, 0);
+    if (pRet == 0)
+        PyErr_Print();
+    Py_XDECREF(pRet);
 }
 
 void controller_report_departure(controller_t c, double response_time, int queue_length, int with_optional) {
-    PyObject_CallMethod(c->pController, "reportData", "bdiddb", 0, response_time, queue_length, 0, 0, with_optional);
+    PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb", 0, response_time, queue_length, 0, 0, with_optional);
+    if (pRet == 0)
+        PyErr_Print();
+    Py_XDECREF(pRet);
 }
 
 int controller_with_optional(controller_t c, int current_queue_length) {
+    int ret = 0;
+
     PyObject *pRet = PyObject_CallMethod(c->pController, "withOptional", "i", current_queue_length);
     PyObject *pFirst = PyTuple_GetItem(pRet, 0);
     if (pFirst == Py_True)
-        return 1;
+        ret = 1;
     else if (pFirst == Py_False)
-        return 0;
-    LOG_ERROR("withOptional returned invalid value");
-    return 0;
+        ret = 0;
+    else
+        LOG_ERROR("withOptional returned invalid value");
+    Py_DECREF(pRet);
+    return ret;
 }
 
 char *controller_upstream_info(controller_t c) {
