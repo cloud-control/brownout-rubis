@@ -117,7 +117,25 @@ int controller_with_optional(controller_t c, int current_queue_length) {
 }
 
 char *controller_upstream_info(controller_t c) {
-    return "5";
+    PyObject *pRet = PyObject_GetAttrString(c->pController, "queueLengthSetpoint");
+    if (!pRet) {
+        LOG_ERROR("queueLengthSetpoint not found");
+        return 0;
+    }
+
+    PyObject *pRetStr = PyObject_Str(pRet);
+    Py_DECREF(pRet);
+
+    if (!pRetStr) {
+        LOG_ERROR("queueLengthSetpoint not convertible to string");
+        return 0;
+    }
+
+    char *ret;
+    ret = strdup(PyString_AsString(pRetStr));
+    Py_DECREF(pRetStr);
+
+    return ret;
 }
 
 void controller_run_control_loop(controller_t c) {
