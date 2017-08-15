@@ -66,7 +66,7 @@ controller_t controller_init() {
         "import controllers.server.cf_cascaded as controllerModule\n"
         "parser = argparse.ArgumentParser()\n"
         "controllerModule.addCommandLine(parser)\n"
-        "args = parser.parse_args()\n"
+        "args = parser.parse_args(['--CCOuterPeriod', '1'])\n"
         "controllerModule.parseCommandLine(args)\n"
     );
 
