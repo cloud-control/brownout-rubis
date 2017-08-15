@@ -1,5 +1,6 @@
 #include "controller.h"
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -21,6 +22,7 @@ static double now()
 struct controller_s {
     PyObject *pController;
     PyObject *pRunControlLoop;
+    int current_queue_length;
 };
 
 typedef struct {
@@ -90,6 +92,8 @@ controller_t controller_init() {
     if (c->pController == 0)
         ABORT_WITH_PYERR("Could not create new instance of controller; aborting");
 
+    c->current_queue_length = 0;
+
     return c;
 }
 
@@ -99,24 +103,18 @@ void controller_free(controller_t c) {
     free(c);
 }
 
-void controller_report_arrival(controller_t c) {
-    PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb", 1, 0, 0, 0, 0, 0);
-    if (pRet == 0)
-        PyErr_Print();
-    Py_XDECREF(pRet);
-}
-
-void controller_report_departure(controller_t c, double response_time, int queue_length, int with_optional) {
-    PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb", 0, response_time, queue_length, 0, 0, with_optional);
-    if (pRet == 0)
-        PyErr_Print();
-    Py_XDECREF(pRet);
-}
-
-int controller_with_optional(controller_t c, int current_queue_length) {
+int controller_with_optional(controller_t c) {
     int ret = 0;
+    PyObject *pRet;
 
-    PyObject *pRet = PyObject_CallMethod(c->pController, "withOptional", "i", current_queue_length);
+    c->current_queue_length++;
+
+    pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb", true, 0, 0, 0, 0, 0);
+    if (pRet == 0)
+        PyErr_Print();
+    Py_XDECREF(pRet);
+
+    pRet = PyObject_CallMethod(c->pController, "withOptional", "i", c->current_queue_length);
     PyObject *pFirst = PyTuple_GetItem(pRet, 0);
     if (pFirst == Py_True)
         ret = 1;
@@ -125,7 +123,18 @@ int controller_with_optional(controller_t c, int current_queue_length) {
     else
         LOG_ERROR("withOptional returned invalid value");
     Py_DECREF(pRet);
+
     return ret;
+}
+
+void controller_report(controller_t c, double response_time, int with_optional) {
+    c->current_queue_length--;
+
+    PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb",
+            false, response_time, c->current_queue_length, 0, 0, with_optional);
+    if (pRet == 0)
+        PyErr_Print();
+    Py_XDECREF(pRet);
 }
 
 char *controller_upstream_info(controller_t c) {

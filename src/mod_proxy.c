@@ -473,7 +473,7 @@ static int proxy_create_env(server *srv, handler_ctx *hctx) {
 	}
 	proxy_set_header(con, "X-Forwarded-Proto", con->uri.scheme->ptr);
 
-	hctx->with_optional = controller_with_optional(hctx->plugin_data->controller, hctx->host->usage);
+	hctx->with_optional = controller_with_optional(hctx->plugin_data->controller);
 	proxy_set_header(con, "X-With-Optional", hctx->with_optional ? "1" : "0");
 
 	/* request header */
@@ -772,7 +772,7 @@ static int proxy_demux_response(server *srv, handler_ctx *hctx) {
 		double response_time =
 			(request_end_time.tv_nsec - hctx->request_start_time.tv_nsec) / 1000000000.0 +
 			(request_end_time.tv_sec  - hctx->request_start_time.tv_sec);
-		controller_report_departure(p->controller, response_time, hctx->host->usage-1, hctx->with_optional);
+		controller_report(p->controller, response_time, hctx->with_optional);
 	}
 
 	return fin;
@@ -855,7 +855,6 @@ static handler_t proxy_write_request(server *srv, handler_ctx *hctx) {
 		proxy_set_state(srv, hctx, PROXY_STATE_WRITE);
 
 		clock_gettime(CLOCK_MONOTONIC, &hctx->request_start_time);
-		controller_report_arrival(hctx->plugin_data->controller);
 
 		/* fall through */
 	case PROXY_STATE_WRITE:;
