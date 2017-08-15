@@ -82,7 +82,7 @@ controller_t controller_init() {
 
     PyObject *pArgs = PyTuple_New(2);
     PyTuple_SetItem(pArgs, 0, (PyObject *)pSim);
-    PyTuple_SetItem(pArgs, 1, Py_None);
+    PyTuple_SetItem(pArgs, 1, PyString_FromString("pyController0"));
     c->pController = PyObject_CallObject(pNewInstance, pArgs);
     Py_DECREF(pArgs);
     Py_DECREF(pNewInstance);
@@ -199,7 +199,24 @@ Sim_add(Sim* self, PyObject *args) {
 
 static PyObject *
 Sim_output(Sim* self, PyObject *args) {
-    LOG_INFO("%s", PyString_AsString(PyTuple_GetItem(args, 1)));
+    if (PyTuple_Size(args) != 2) {
+        LOG_ERROR("takes exactly 2 arguments (%ld given)", PyTuple_Size(args));
+        PyErr_BadArgument();
+        return 0;
+    }
+
+    char *who = NULL;
+    PyObject *pWho = PyTuple_GetItem(args, 0);
+    if (pWho) {
+        pWho = PyObject_Str(pWho);
+        who = PyString_AsString(pWho);
+        Py_XDECREF(pWho);
+    }
+
+    LOG_INFO("[%s] %s",
+            who,
+            PyString_AsString(PyTuple_GetItem(args, 1)));
+    Py_DECREF(args);
     return Py_None;
 }
 
