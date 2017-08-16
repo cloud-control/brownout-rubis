@@ -107,9 +107,7 @@ int controller_with_optional(controller_t c) {
     int ret = 0;
     PyObject *pRet;
 
-    c->current_queue_length++;
-
-    pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb", true, 0, 0, 0, 0, 0);
+    pRet = PyObject_CallMethod(c->pController, "reportData", "ididdi", true, 0.0, 0, 0.0, 0.0, false);
     if (pRet == 0)
         PyErr_Print();
     Py_XDECREF(pRet);
@@ -124,14 +122,16 @@ int controller_with_optional(controller_t c) {
         LOG_ERROR("withOptional returned invalid value");
     Py_DECREF(pRet);
 
+    c->current_queue_length++;
+
     return ret;
 }
 
 void controller_report(controller_t c, double response_time, int with_optional) {
     c->current_queue_length--;
 
-    PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "bdiddb",
-            false, response_time, c->current_queue_length, 0, 0, with_optional);
+    PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "ididdi",
+            false, response_time, c->current_queue_length, 0.0, 0.0, with_optional);
     if (pRet == 0)
         PyErr_Print();
     Py_XDECREF(pRet);
@@ -203,6 +203,7 @@ Sim_add(Sim* self, PyObject *args) {
     Py_INCREF(pCallback);
     self->c->pRunControlLoop = pCallback;
 
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -219,13 +220,13 @@ Sim_output(Sim* self, PyObject *args) {
     if (pWho) {
         pWho = PyObject_Str(pWho);
         who = PyString_AsString(pWho);
-        Py_XDECREF(pWho);
     }
 
     LOG_INFO("[%s] %s",
             who,
             PyString_AsString(PyTuple_GetItem(args, 1)));
-    Py_DECREF(args);
+
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
