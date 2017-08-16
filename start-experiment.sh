@@ -70,4 +70,5 @@ docker run --rm -ti \
     --open \
     --deterministic \
     --concurrency 100 \
-    --thinktime 1
+    --thinktime 1 \
+| sed -r -e 's/^(time=[0-9.]+).*(latency95=[0-9.]+ms).*(rr=[0-9.]+%).*$/\1\t\2\t\3/p'
