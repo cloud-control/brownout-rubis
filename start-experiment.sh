@@ -40,8 +40,7 @@ docker run --detach \
     rubis-web-tier
 
 # Wait for db-tier to start
-DB_TIER_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' rubis-db-tier-0)
-while ! nc -w 1 -q 0 $DB_TIER_IP 3306 > /dev/null; do
+while ! docker run --rm --link rubis-db-tier-0:db appropriate/nc -w 1 -q 0 db 3306 > /dev/null; do
     log "Waiting for DB tier to start (this may take 60 seconds) ..."
     sleep 5
 done
