@@ -474,7 +474,7 @@ static int proxy_create_env(server *srv, handler_ctx *hctx) {
 	proxy_set_header(con, "X-Forwarded-Proto", con->uri.scheme->ptr);
 
 	hctx->with_optional = controller_with_optional(hctx->plugin_data->controller);
-	proxy_set_header(con, "X-With-Optional", hctx->with_optional ? "1" : "0");
+	proxy_set_header(con, "Brownout-With-Optional", hctx->with_optional ? "1" : "0");
 
 	/* request header */
 	for (i = 0; i < con->request.headers->used; i++) {
