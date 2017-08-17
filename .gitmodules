@@ -1,0 +1,12 @@
+[submodule "rubis-db-tier"]
+	path = rubis-db-tier
+	url = git@github.com:cloud-control/brownout-rubis.git
+	branch = rubis-db-tier
+[submodule "rubis-web-tier"]
+	path = rubis-web-tier
+	url = git@github.com:cloud-control/brownout-rubis.git
+	branch = rubis-web-tier
+[submodule "rubis-control-tier"]
+	path = rubis-control-tier
+	url = git@github.com:cloud-control/brownout-rubis.git
+	branch = rubis-control-tier-with-python-controller
