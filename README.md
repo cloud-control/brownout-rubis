@@ -14,12 +14,12 @@ Each branch contains a tier (`rubis-web-tier`, `rubis-db-tier`, `rubis-control-t
 
         git clone --depth=1 --recursive git@github.com:cloud-control/brownout-rubis.git
 
-2. **Test** if everything works: Open [this link](http://localhost/PHP/RandomItem.php); if you see the RUBiS logo and some items, then everything works fine.
-
-3. **Run** experiments
+2. **Run** experiments
 
         cd brownout-rubis
         ./start-experiment.sh
+
+3. **Test** if everything works: Open [this link](http://localhost/PHP/RandomItem.php); if you see the RUBiS logo and some items, then everything works fine.
 
 4. **Shutdown**: The code is meant to be stateless, so kill with fire!
 
