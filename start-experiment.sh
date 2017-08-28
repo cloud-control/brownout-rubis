@@ -131,4 +131,4 @@ for i in $(seq 1 20); do
 done
 setConcurrency  0
 
-docker logs rubis-control-tier-0 > rubis-control-tier-0.log
+docker logs rubis-control-tier-0 2> rubis-control-tier-0.log
