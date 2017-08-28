@@ -53,6 +53,7 @@ done
 log "Starting vmtouch-rubis-db-data-0 ..."
 docker run --detach \
     --name vmtouch-rubis-db-data-0 \
+    --cap-add IPC_LOCK \
     --volume $DB_DIR:/data \
     cklein/vmtouch
 
