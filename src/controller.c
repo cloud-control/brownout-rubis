@@ -103,7 +103,7 @@ void controller_free(controller_t c) {
     free(c);
 }
 
-int controller_with_optional(controller_t c) {
+int controller_with_optional(controller_t c, int queue_length) {
     int ret = 0;
     PyObject *pRet;
 
@@ -112,7 +112,7 @@ int controller_with_optional(controller_t c) {
         PyErr_Print();
     Py_XDECREF(pRet);
 
-    pRet = PyObject_CallMethod(c->pController, "withOptional", "i", c->current_queue_length);
+    pRet = PyObject_CallMethod(c->pController, "withOptional", "i", queue_length-1);
     PyObject *pFirst = PyTuple_GetItem(pRet, 0);
     if (pFirst == Py_True)
         ret = 1;
@@ -127,11 +127,11 @@ int controller_with_optional(controller_t c) {
     return ret;
 }
 
-void controller_report(controller_t c, double response_time, int with_optional) {
+void controller_report(controller_t c, double response_time, int queue_length, int with_optional) {
     c->current_queue_length--;
 
     PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "ididdi",
-            false, response_time, c->current_queue_length, 0.0, 0.0, with_optional);
+            false, response_time, queue_length-1, 0.0, 0.0, with_optional);
     if (pRet == 0)
         PyErr_Print();
     Py_XDECREF(pRet);
