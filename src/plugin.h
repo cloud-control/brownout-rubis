@@ -36,6 +36,7 @@ typedef struct {
 	handler_t (* cleanup)                (server *srv, void *p_d);
 	                                                                                   /* is called ... */
 	handler_t (* handle_trigger)         (server *srv, void *p_d);                     /* once a second */
+	handler_t (* handle_half_trigger)    (server *srv, void *p_d);                     /* called every 0.5 seconds */
 	handler_t (* handle_sighup)          (server *srv, void *p_d);                     /* at a signup */
 
 	handler_t (* handle_uri_raw)         (server *srv, connection *con, void *p_d);    /* after uri_raw is set */
@@ -76,6 +77,7 @@ handler_t plugins_call_handle_joblist(server *srv, connection *con);
 handler_t plugins_call_connection_reset(server *srv, connection *con);
 
 handler_t plugins_call_handle_trigger(server *srv);
+handler_t plugins_call_handle_half_trigger(server *srv);
 handler_t plugins_call_handle_sighup(server *srv);
 
 handler_t plugins_call_init(server *srv);

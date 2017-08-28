@@ -1210,10 +1210,12 @@ int main (int argc, char **argv) {
 	}
 
 	/* main-loop */
+	struct timespec last_half_trigger = { 0, 0 };
 	while (!srv_shutdown) {
 		int n;
 		size_t ndx;
 		time_t min_ts;
+		int ms_to_next_half_trigger;
 
 		if (handle_sig_hup) {
 			handler_t r;
@@ -1468,7 +1470,43 @@ int main (int argc, char **argv) {
 			}
 		}
 
-		if ((n = fdevent_poll(srv->ev, 1000)) > 0) {
+		{
+			/* Works but looks a bit unreadable */
+			struct timespec now;
+			long ms_diff;
+			clock_gettime(CLOCK_REALTIME, &now);
+
+			if (last_half_trigger.tv_sec == 0) {
+				last_half_trigger.tv_sec = now.tv_sec + 1;
+				last_half_trigger.tv_nsec = 0;
+			}
+
+			ms_diff = ((long)now.tv_nsec - (long)last_half_trigger.tv_nsec) / 1000000 +
+				((long)now.tv_sec - (long)last_half_trigger.tv_sec) * 1000;
+			ms_to_next_half_trigger = 500 - ms_diff;
+			//fprintf(stderr, "ms_diff %ld, ms_to_next_half_trigger %ld, now %lu.%09lu, last %lu.%09lu\n", ms_diff, ms_to_next_half_trigger, now.tv_sec, now.tv_nsec, last_half_trigger.tv_sec, last_half_trigger.tv_nsec);
+			while (ms_to_next_half_trigger <= 0) {
+				handler_t r;
+
+				ms_to_next_half_trigger += 500;
+			        last_half_trigger.tv_nsec += 500000000;
+				last_half_trigger.tv_sec += last_half_trigger.tv_nsec / 1000000000;
+				last_half_trigger.tv_nsec %= 1000000000;
+
+				switch(r = plugins_call_handle_half_trigger(srv)) {
+				case HANDLER_GO_ON:
+					break;
+				case HANDLER_ERROR:
+					log_error_write(srv, __FILE__, __LINE__, "s", "one of the half triggers failed");
+					break;
+				default:
+					log_error_write(srv, __FILE__, __LINE__, "d", r);
+					break;
+				}
+			}
+		}
+
+		if ((n = fdevent_poll(srv->ev, ms_to_next_half_trigger)) > 0) {
 			/* n is the number of events */
 			int revents;
 			int fd_ndx;

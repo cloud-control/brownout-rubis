@@ -1412,11 +1412,14 @@ TRIGGER_FUNC(mod_proxy_trigger) {
 		}
 	}
 
-	controller_run_control_loop(p->controller);
-
 	return HANDLER_GO_ON;
 }
 
+TRIGGER_FUNC(mod_proxy_half_trigger) {
+	plugin_data *p = p_d;
+	controller_run_control_loop(p->controller);
+	return HANDLER_GO_ON;
+}
 
 int mod_proxy_plugin_init(plugin *p);
 int mod_proxy_plugin_init(plugin *p) {
@@ -1431,6 +1434,7 @@ int mod_proxy_plugin_init(plugin *p) {
 	p->handle_uri_clean        = mod_proxy_check_extension;
 	p->handle_subrequest       = mod_proxy_handle_subrequest;
 	p->handle_trigger          = mod_proxy_trigger;
+	p->handle_half_trigger     = mod_proxy_half_trigger;
 
 	p->data         = NULL;
 

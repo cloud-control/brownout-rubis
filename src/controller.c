@@ -66,7 +66,7 @@ controller_t controller_init() {
         "import controllers.server.cf_cascaded as controllerModule\n"
         "parser = argparse.ArgumentParser()\n"
         "controllerModule.addCommandLine(parser)\n"
-        "args = parser.parse_args(['--CCOuterPeriod', '1'])\n"
+        "args = parser.parse_args(['--CCOuterPeriod', '0.5'])\n"
         "controllerModule.parseCommandLine(args)\n"
     );
 
@@ -197,7 +197,7 @@ Sim_add(Sim* self, PyObject *args) {
         return 0;
     }
 
-    if (when != 1)
+    if (when != 0.5)
         LOG_WARN("This (fake) simulator only supports events 1 second into the future (%lf requested)", when);
 
     Py_INCREF(pCallback);
