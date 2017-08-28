@@ -21,7 +21,7 @@ function cleanup {
 set -e
 
 : ${XDG_CACHE_HOME:=$HOME/.cache}
-DB_DIR=$XDG_CACHE_HOME/brownout-rubis/data
+DB_DIR=/srv/brownout-rubis/data
 
 cleanup
 
