@@ -40,7 +40,6 @@ log "Starting rubis-web-tier ..."
 docker run --detach \
     --name rubis-web-tier-0 \
     --link rubis-db-tier-0:mysql \
-    --publish 8080:80 \
     --cpuset-cpus '0' \
     rubis-web-tier
 
@@ -60,6 +59,7 @@ docker run --detach \
 log "Starting rubis-control-tier-0 ..."
 docker run --detach \
     --name rubis-control-tier-0 \
+    --link rubis-web-tier-0:backend \
     --publish 80:80 \
     rubis-control-tier
 
