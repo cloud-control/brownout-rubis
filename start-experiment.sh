@@ -50,11 +50,16 @@ while ! docker run --rm --link rubis-db-tier-0:db appropriate/nc -w 1 -q 0 db 33
 done
 
 log "Starting vmtouch-rubis-db-data-0 ..."
-docker run --detach \
+docker run --detach -t \
     --name vmtouch-rubis-db-data-0 \
     --cap-add IPC_LOCK \
     --volume $DB_DIR:/data \
     cklein/vmtouch
+
+while ! docker logs vmtouch-rubis-db-data-0 | grep -q LOCKED; do
+    log "Waiting for vmtouch to lock DB in-memory ..."
+    sleep 1
+done
 
 log "Starting rubis-control-tier-0 ..."
 docker run --detach \
