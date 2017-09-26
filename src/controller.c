@@ -42,6 +42,7 @@ staticforward PyTypeObject SimType;
     } while(0)
 
 controller_t controller_init() {
+#if 0
     controller_t c = malloc(sizeof(struct controller_s));
     char *fake_argv[] = { "" };
 
@@ -95,15 +96,21 @@ controller_t controller_init() {
     c->current_queue_length = 0;
 
     return c;
+#endif
 }
 
 void controller_free(controller_t c) {
+#if 0
     Py_Finalize();
 
     free(c);
+#endif
 }
 
 int controller_with_optional(controller_t c, int queue_length) {
+    return true;
+
+#if 0
     int ret = 0;
     PyObject *pRet;
 
@@ -125,9 +132,11 @@ int controller_with_optional(controller_t c, int queue_length) {
     c->current_queue_length++;
 
     return ret;
+#endif
 }
 
 void controller_report(controller_t c, double response_time, int queue_length, int with_optional) {
+#if 0
     c->current_queue_length--;
 
     PyObject *pRet = PyObject_CallMethod(c->pController, "reportData", "ididdi",
@@ -135,9 +144,12 @@ void controller_report(controller_t c, double response_time, int queue_length, i
     if (pRet == 0)
         PyErr_Print();
     Py_XDECREF(pRet);
+#endif
 }
 
 char *controller_upstream_info(controller_t c) {
+    return strdup("0");
+#if 0
     PyObject *pRet = PyObject_GetAttrString(c->pController, "queueLengthSetpoint");
     if (!pRet) {
         LOG_ERROR("queueLengthSetpoint not found");
@@ -157,9 +169,11 @@ char *controller_upstream_info(controller_t c) {
     Py_DECREF(pRetStr);
 
     return ret;
+#endif
 }
 
 void controller_run_control_loop(controller_t c) {
+#if 0
     if (c->pRunControlLoop) {
         PyObject *toCall = c->pRunControlLoop;
         c->pRunControlLoop = 0;
@@ -171,6 +185,7 @@ void controller_run_control_loop(controller_t c) {
 
         Py_DECREF(toCall);
     }
+#endif
 }
 
 static PyObject *
