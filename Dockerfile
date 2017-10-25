@@ -51,4 +51,5 @@ COPY lighttpd-brownout-test.conf start-lbb.sh /usr/src/lighttpd/
 
 COPY brownout-lb-simulator /usr/src/lighttpd/brownout-lb-simulator/
 
-CMD ( cd /usr/src/lighttpd; ./start-lbb.sh )
+WORKDIR /usr/src/lighttpd
+CMD ./start-lbb.sh
