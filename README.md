@@ -32,6 +32,10 @@ Advanced Usage
 
 You may use the [`DOCKER_HOST`](https://stackoverflow.com/questions/25234792/what-does-the-docker-host-variable-do) environment variable to deploy the whole experiment on a different machine.
 
+For efficiency, the database tier's data is stored in a host folder, i.e., in `/srv/brownout-rubis/data`. If something went wrong during installation or you want to fully remove Brownout RUBiS, type:
+
+    sudo rm -f /srv/brownout-rubis/data
+
 Contact
 -------
 
